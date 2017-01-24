@@ -445,7 +445,7 @@ int CheckTTot(int crate, int slot_num, uint32_t chan_mask, int goal_time, int *d
 
   // measure it twice to make sure we are good
   for (int i=0;i<2;i++){
-   real_delay = mtc->SetGTDelay((float) goal_time - TUB_DELAY);
+    real_delay = mtc->SetGTDelay((float) goal_time - TUB_DELAY);
 
     while (real_delay < ((float) goal_time - TUB_DELAY - 5))
     {
@@ -476,6 +476,6 @@ int CheckTTot(int crate, int slot_num, uint32_t chan_mask, int goal_time, int *d
         diff[k] = 0;
       }
     }
- }
+  }
   return 0;
 }
