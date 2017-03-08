@@ -806,7 +806,6 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             JsonNode *config = json_find_member(test_doc,"config");
             char *testtype = json_get_string(json_find_member(test_doc,"type"));
             if ((json_get_number(json_find_member(config,"crate_id")) == i) && (json_get_number(json_find_member(config,"slot")) == j)){
-              lprintf("test type is %s\n",json_get_string(json_find_member(test_doc,"type")));
               AddECALTestResults(doc,test_doc);
             }
           }
