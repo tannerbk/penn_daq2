@@ -8,12 +8,13 @@
 #include "ControllerLink.h"
 #include "XL3Model.h"
 #include "MTCModel.h"
+#include "XL3Cmds.h"
 #include "SeeReflection.h"
 
 int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dacValue, float frequency, int updateDB, int finalTest)
 {
   lprintf("*** Starting See Reflection ************\n");
-  lprintf("MAKE SURE YOU HAVE REINITIALIZED WITH TRIGGERS ENABLED FIRST! (-t OPTION IN CRATE_INIT\n");
+  lprintf("Warning, triggers will be enables for specified slots (one at a time)\n");
 
   char channel_results[32][100];
 
@@ -32,6 +33,11 @@ int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dac
     // loop over slots
     for (int i=0;i<16;i++){
       if ((0x1<<i) & slotMask){
+
+        // Enable triggers on this slot
+        if( finalTest == 0)
+          CrateInit(crateNum, slotMask,0,0,0,0,0,0,0,0,1);
+
         // loop over channels
         for (int j=0;j<32;j++){
           if ((0x1<<j) & channelMask){
@@ -75,6 +81,10 @@ int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dac
 
         // clear chinj for this slot
         xl3s[crateNum]->SetupChargeInjection((0x1<<i),0x0,dacValue);
+
+        // turn off triggers for this slot
+        if( finalTest == 0)
+          CrateInit(crateNum,slotMask,0,0,0,0,0,0,0,0,0);
 
         // update the database
         if (updateDB){
