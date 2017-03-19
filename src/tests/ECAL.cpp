@@ -108,7 +108,9 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     lprintf("Doing all tests\n");
     testMask = 0xFFFFFFFF;
   }
-  else if ((testMask != 0x0) && (!quickFlag)){
+  else if ((testMask != 0x0)){
+    if (quickFlag)
+      testMask &= 0x728;
     lprintf("Doing ");
     for (int i=0;i<11;i++)
       if ((0x1<<i) & testMask)
@@ -240,9 +242,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
         CrateInit(i,slotMasks[i],0,1,0,1,0,0,0,0);
 
     if ((0x1<<testCounter) & testMask)
-      for (int i=0;i<MAX_XL3_CON;i++)
-        if ((0x1<<i) & crateMask)
-          GTValidTest(i,slotMasks[i],0xFFFFFFFF,410,0,1,0,1);
+          GTValidTest(crateMask,slotMasks,0xFFFFFFFF,410,0,quickFlag,1,0,1);
     testCounter++;
 
     MTCInit(1);

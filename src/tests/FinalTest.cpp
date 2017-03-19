@@ -205,8 +205,11 @@ int FinalTest(int crateNum, uint32_t slotMask, uint32_t testMask, int skip)
   if ((0x1<<testCounter) & testMask)
     DiscCheck(crateNum,slotMask,500000,updateDB,1);
   testCounter++;
+  uint32_t slotMasks[MAX_XL3_CON];
+  for (int ic=0;ic<MAX_XL3_CON;ic++)
+    slotMasks[ic] = slotMask;
   if ((0x1<<testCounter) & testMask)
-    GTValidTest(crateNum,slotMask,0xFFFFFFFF,400,0,updateDB,1);
+    GTValidTest((0x1)<<crateNum,slotMasks,0xFFFFFFFF,400,0,0,updateDB,1);
   testCounter++;
 
   CrateInit(crateNum,slotMask,1,0,0,0,0,0,0,0);
