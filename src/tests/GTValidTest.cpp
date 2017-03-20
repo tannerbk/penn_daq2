@@ -598,6 +598,7 @@ void IsGTValidLonger(uint32_t crateMask, uint32_t *slotMasks, float time, uint16
   }
 }
 
+// Measure skipped with setOnly flag
 float MeasureGTValid(int crateNum, int slotNum, int tac, float max_gtvalid, uint32_t max_isetm)
 {
   lprintf(".");
