@@ -13,7 +13,7 @@
 
 
 
-int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useDebug, int updateDB, int ecal)
+int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useDebug, int channel, int updateDB, int ecal)
 {
   lprintf("*** Starting Noise Run *****************\n");
   lprintf("All crates and mtcs should have been inited with proper values already\n");
@@ -182,7 +182,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
   uint32_t error_channel[MAX_XL3_CON][16];
 
 
-  // set up variables, going to start all at zero+50
+  // set up variables, going to start all at zero+25
   for (int i=0;i<MAX_XL3_CON;i++)
     for (int j=0;j<16;j++){
       error_channel[i][j] = 0x0;
@@ -195,7 +195,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
           done_channel[i][j] |= 0x1<<k;
           current_vthr[i*16*32+j*32+k] = 255;
         }else{
-          current_vthr[i*16*32+j*32+k] = vthr_zeros[i*16*32+j*32+k]+50;
+          current_vthr[i*16*32+j*32+k] = vthr_zeros[i*16*32+j*32+k]+25;
         }
         current_vthr2[i*16*32+j*32+k] = 0;
       }
@@ -397,88 +397,98 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
     iterations++;
   } // end while(done == 0)
 
-  for (int i=0;i<MAX_XL3_CON;i++)
-    if ((0x1<<i) & crateMask)
-      for (int j=0;j<16;j++)
-        if ((0x1<<j) & slotMasks[i])
-          for (int k=0;k<32;k++)
-            current_vthr2[i*16*32+j*32+k] = current_vthr[i*16*32+j*32+k];
+  if (channel){
+    for (int i=0;i<MAX_XL3_CON;i++)
+      if ((0x1<<i) & crateMask)
+        for (int j=0;j<16;j++)
+          if ((0x1<<j) & slotMasks[i])
+            for (int k=0;k<32;k++)
+              current_vthr2[i*16*32+j*32+k] = current_vthr[i*16*32+j*32+k];
 
-  // we should now have every channel with no extra noise. Now lower each
-  // channel one by one, make sure it wasn't some other noisy channel making it
-  // look noisy
-  for (int i=0;i<MAX_XL3_CON;i++){
-    if ((0x1<<i) & crateMask){
-      int slotIter = 0;
-      for (int j=0;j<16;j++){
-        if ((0x1<<j) & slotMasks[i]){
-          for (int k=0;k<32;k++){
+    // we should now have every channel with no extra noise. Now lower each
+    // channel one by one, make sure it wasn't some other noisy channel making it
+    // look noisy
+    for (int i=0;i<MAX_XL3_CON;i++){
+      if ((0x1<<i) & crateMask){
+        int slotIter = 0;
+        for (int j=0;j<16;j++){
+          if ((0x1<<j) & slotMasks[i]){
+            for (int k=0;k<32;k++){
 
-            int done = 0;
-            while (done == 0){
+              int steps = 0;
+              int done = 0;
+              while (done == 0){
 
-              slot_nums[k] = j;
-              dac_nums[k] = d_vthr[k];
-              dac_values[k] = current_vthr2[i*16*32+j*32+k];
+                slot_nums[k] = j;
+                dac_nums[k] = d_vthr[k];
+                dac_values[k] = current_vthr2[i*16*32+j*32+k];
 
-              if (xl3s[i]->MultiLoadsDac(32,dac_nums,dac_values,slot_nums)){
-                lprintf("Error loading dacs. Exiting\n");
-                free(readout_noise);
-                free(vthr_zeros);
-                free(current_vthr);
-                free(current_vthr2);
+                if (xl3s[i]->MultiLoadsDac(32,dac_nums,dac_values,slot_nums)){
+                  lprintf("Error loading dacs. Exiting\n");
+                  free(readout_noise);
+                  free(vthr_zeros);
+                  free(current_vthr);
+                  free(current_vthr2);
 
-                for (int c=0;c<MAX_XL3_CON;c++)
-                  if ((0x1<<c) & crateMask)
-                    xl3s[c]->ChangeMode(INIT_MODE,slotMasks[c]);
-                return -1;
-              }
+                  for (int c=0;c<MAX_XL3_CON;c++)
+                    if ((0x1<<c) & crateMask)
+                      xl3s[c]->ChangeMode(INIT_MODE,slotMasks[c]);
+                  return -1;
+                }
 
-              if(j < 8)
-                 xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF, total_count1);
-              else 
-                 xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF00, total_count1);
+                if(j < 8)
+                   xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF, total_count1);
+                else 
+                   xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF00, total_count1);
 
-              readout_noise[i*16*32+j*32+k] = total_count1[slotIter][k];
+                readout_noise[i*16*32+j*32+k] = total_count1[slotIter][k];
 
-              // now we wait
-              for (int t=0;t<2;t++)
-                usleep(SLEEP_TIME);
+                // now we wait
+                for (int t=0;t<2;t++)
+                  usleep(SLEEP_TIME);
 
-              if(j < 8)  
-                 xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF, total_count1);
-              else 
-                 xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF00, total_count1);
+                if(j < 8)  
+                   xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF, total_count1);
+                else 
+                   xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF00, total_count1);
 
-              readout_noise[i*16*32+j*32+k] = total_count1[slotIter][k] - readout_noise[i*16*32+j*32+k];
+                readout_noise[i*16*32+j*32+k] = total_count1[slotIter][k] - readout_noise[i*16*32+j*32+k];
 
 
-              printf("%2d %2d %2d: %3d, %7u (%.0f) \n",i,j,k,current_vthr2[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k],frequency*(2*SLEEP_TIME/1e6+0.25)+1);
+                printf("%2d %2d %2d: %3d, %7u (%.0f) \n",i,j,k,current_vthr2[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k],frequency*(2*SLEEP_TIME/1e6+0.25)+1);
 
-              if (readout_noise[i*16*32+j*32+k] > frequency*(2*SLEEP_TIME/1e6+0.25)+1){
-                current_vthr2[i*16*32+j*32+k]++;
-                printf("Done: %2d %2d %2d: %3d, %7u (%.0f) \n",i,j,k,current_vthr2[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k],frequency*(2*SLEEP_TIME/1e6+0.25)+1);
-                done = 1;
-              }
-              else{
-                current_vthr2[i*16*32+j*32+k]--;
-              }
-            } // end while loop
+                // First check for issues
+                if (current_vthr2[i*16*32+j*32+k] <= vthr_zeros[i*16*32+j*32+k]                     || current_vthr2[i*16*32+j*32+k] == 255
+                    || current_vthr2[i*16*32+j*32+k] == 0){
+                  current_vthr2[i*16*32+j*32+k] = 255;
+                  done = 1;
+                }
+                else if (readout_noise[i*16*32+j*32+k] > frequency*(2*SLEEP_TIME/1e6+0.25)+1){
+                  if(steps > 0)
+                    current_vthr2[i*16*32+j*32+k]++;
+                  printf("Done: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
+                  done = 1;
+                }
+                else{
+                  current_vthr2[i*16*32+j*32+k]--;
+                  steps++;
+                }
+              } // end while loop
+            }
+            slotIter++;
           }
-          slotIter++;
         }
       }
     }
-  }
 
-  // Print the difference
-  for (int i=0;i<MAX_XL3_CON;i++)
-    if ((0x1<<i) & crateMask)
-      for (int j=0;j<16;j++)
-        if ((0x1<<j) & slotMasks[i])
-          for (int k=0;k<32;k++)
-            lprintf("%3d %3d \n",current_vthr[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k],current_vthr2[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k]);
-
+    // Print the difference
+    for (int i=0;i<MAX_XL3_CON;i++)
+      if ((0x1<<i) & crateMask)
+        for (int j=0;j<16;j++)
+          if ((0x1<<j) & slotMasks[i])
+            for (int k=0;k<32;k++)
+              lprintf("%3d %3d \n",current_vthr[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k],current_vthr2[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k]);
+  } // end if channel
 
   if (updateDB){
     lprintf("Updating the database\n");
@@ -493,7 +503,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
               JsonNode *one_chan = json_mkobject();
               json_append_member(one_chan,"id",json_mknumber(k));
               json_append_member(one_chan,"zero_used",json_mknumber(vthr_zeros[i*32*16+j*32+k]));
-              json_append_member(one_chan,"noiseless",json_mknumber(current_vthr[i*32*16+j*32+k]));
+              json_append_member(one_chan,"noiseless",json_mknumber(current_vthr2[i*32*16+j*32+k]));
               JsonNode *points = json_mkarray();
               json_append_element(channels,one_chan);
             }
