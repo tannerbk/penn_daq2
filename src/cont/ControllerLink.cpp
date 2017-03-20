@@ -1095,11 +1095,13 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
+    uint32_t slotMasks[MAX_XL3_CON];
+    GetMultiUInt(input,MAX_XL3_CON,'s',slotMasks,0xFFFF);
     uint32_t channelMask = GetUInt(input,'p',0xFFFFFFFF);
     float gtCutoff = GetFloat(input,'g',410);
     int twiddleOn = GetFlag(input,'t');
     int update = GetFlag(input,'d');
+    int setOnly = GetFlag(input,'q');
     int busy = LockConnections(1,0x1<<crateNum);
     if (busy){
       if (busy > 9)
@@ -1108,7 +1110,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    GTValidTest(crateNum,slotMask,channelMask,gtCutoff,twiddleOn,update);
+    GTValidTest(crateNum,slotMasks,channelMask,gtCutoff,twiddleOn,setOnly,update);
     UnlockConnections(1,0x1<<crateNum);
 
   }else if (strncmp(input,"mb_stability_test",17) == 0){
