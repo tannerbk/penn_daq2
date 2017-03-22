@@ -14,7 +14,7 @@
 #define DEF_DB_VIEWDOC "_design/view_doc/_view"
 
 const static int ntests = 5;
-static const char test_map[5][20] = {"crate_cbal","zdisc","set_ttot","cmos_gtvalid","find_noise"};
+static const char test_map[ntests][20] = {"crate_cbal","zdisc","set_ttot","cmos_m_gtvalid","find_noise_2"};
 
 int GetNewID(char* newid);
 

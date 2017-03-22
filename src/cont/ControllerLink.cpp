@@ -1530,16 +1530,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     char loadECAL[500];
     memset(loadECAL,'\0',sizeof(loadECAL));
     GetString(input,loadECAL,'l',"");
-    int busy = LockConnections(1,crateMask);
-    if (busy){
-      if (busy > 9)
-        lprintf("Trying to access a board that has not been connected\n");
-      else
-        lprintf("ThoseConnections are currently in use.\n");
-      goto err;
-    }
     CreateFECDocs(crateMask, slotMasks, loadECAL);
-    UnlockConnections(1,crateMask);
 
   }else if (strncmp(input,"find_noise",10) == 0){
     if (GetFlag(input,'h')){
