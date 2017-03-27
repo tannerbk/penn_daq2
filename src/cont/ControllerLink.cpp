@@ -1095,10 +1095,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
     uint32_t slotMasks[MAX_XL3_CON];
-    for (int ic=0;ic<MAX_XL3_CON;ic++)
-      slotMasks[ic] = slotMask;
+    GetMultiUInt(input,MAX_XL3_CON,'s',slotMasks,0xFFFF);
     uint32_t channelMask = GetUInt(input,'p',0xFFFFFFFF);
     float gtCutoff = GetFloat(input,'g',410);
     int twiddleOn = GetFlag(input,'t');
