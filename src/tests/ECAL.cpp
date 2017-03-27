@@ -258,7 +258,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     testCounter++;
 
     if ((0x1<<testCounter) & testMask)
-      FindNoise(crateMask,slotMasks,20,1,1,1);
+      FindNoise(crateMask,slotMasks,20,1,0,1,1);
 
     lprintf("ECAL finished!\n");
 
