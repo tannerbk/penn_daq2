@@ -397,17 +397,18 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
     iterations++;
   } // end while(done == 0)
 
-  if (channel){
-    for (int i=0;i<MAX_XL3_CON;i++)
-      if ((0x1<<i) & crateMask)
-        for (int j=0;j<16;j++)
-          if ((0x1<<j) & slotMasks[i])
-            for (int k=0;k<32;k++)
-              current_vthr2[i*16*32+j*32+k] = current_vthr[i*16*32+j*32+k];
+  // set vthr2 equal to vthr for debugging
+  for (int i=0;i<MAX_XL3_CON;i++)
+    if ((0x1<<i) & crateMask)
+      for (int j=0;j<16;j++)
+        if ((0x1<<j) & slotMasks[i])
+          for (int k=0;k<32;k++)
+            current_vthr2[i*16*32+j*32+k] = current_vthr[i*16*32+j*32+k];
 
     // we should now have every channel with no extra noise. Now lower each
     // channel one by one, make sure it wasn't some other noisy channel making it
     // look noisy
+  if (channel){
     for (int i=0;i<MAX_XL3_CON;i++){
       if ((0x1<<i) & crateMask){
         int slotIter = 0;
@@ -492,12 +493,19 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
     }
 
     // Print the difference
-    for (int i=0;i<MAX_XL3_CON;i++)
-      if ((0x1<<i) & crateMask)
-        for (int j=0;j<16;j++)
-          if ((0x1<<j) & slotMasks[i])
-            for (int k=0;k<32;k++)
-              lprintf("%3d %3d \n",current_vthr[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k],current_vthr2[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k]);
+    for (int i=0;i<MAX_XL3_CON;i++){
+      if ((0x1<<i) & crateMask){
+        for (int j=0;j<16;j++){
+          if ((0x1<<j) & slotMasks[i]){
+            lprintf("Crate/Slot: %2d/%d \n",i,j); 
+            for (int k=0;k<32;k++){
+              lprintf("%2d: Thr-Zero: %3d %3d Abs. Thr: %3d %3d \n",k,current_vthr[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k],current_vthr2[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k], current_vthr[i*16*32+j*32+k], current_vthr2[i*16*32+j*32+k]);
+            }
+          }
+        }
+      }
+    }
+
   } // end if channel
 
   if (updateDB){
