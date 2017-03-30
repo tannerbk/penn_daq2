@@ -469,11 +469,20 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                     || current_vthr2[i*16*32+j*32+k] == 255
                     || current_vthr2[i*16*32+j*32+k] == 0){
                   current_vthr2[i*16*32+j*32+k] = 255;
+                  printf("Done Error: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
                   done = 1;
                 }
                 else if (readout_noise[i*16*32+j*32+k] > frequency*(2*SLEEP_TIME/1e6+0.25)+1){
-                  if(steps > 0)
+                  if(steps > 0){
                     current_vthr2[i*16*32+j*32+k]++;
+                  }
+                  //else if(steps == 0 && readout_noise[i*16*32+j*32+k] > 10*frequency*(2*SLEEP_TIME/1e6+0.25)+1){
+                  //  current_vthr2[i*16*32+j*32+k]++;
+                  //} 
+                  printf("Done: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
+                  done = 1;
+                }
+                else if (steps == 2){
                   printf("Done: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
                   done = 1;
                 }
