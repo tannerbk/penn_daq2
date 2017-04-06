@@ -1501,6 +1501,14 @@ void *ControllerLink::ProcessCommand(void *arg)
     }
     uint32_t crateMask = GetUInt(input,'c',0x0);
     uint32_t slotMasks[MAX_XL3_CON];
+    for(int i = 0; i < MAX_XL3_CON; i++){
+       char crates;
+       if(i < 10)
+          crates = '0'+i;
+       else
+          crates = i;
+       slotMasks[i] = GetUInt(input,crates,0xFFFF);
+    }
     GetMultiUInt(input,MAX_XL3_CON,'s',slotMasks,0x0);
     uint32_t testMask = GetUInt(input,'t',0xFFFFFFFF);
     int quickFlag = GetFlag(input,'q');
