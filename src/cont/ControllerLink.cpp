@@ -1490,18 +1490,25 @@ void *ControllerLink::ProcessCommand(void *arg)
 
   }else if (strncmp(input,"ecal",4) == 0){
     if (GetFlag(input,'h')){
-      lprintf("Usage: ecal -c [crate mask (hex)] -s [all slot masks (hex)] -(00-18) [one slot mask (hex)]\n");
+      lprintf("Usage: ecal -c [crate mask (hex)] -s [all slot masks (hex)] -(0-18) [one slot mask (hex)] SEE MAPPING FOR 10-18 below.\n");
       lprintf("-l [ecal id to update / finish tests (string)] -t [test mask to update / finish (hex)]\n");
       lprintf("-q [quick flag: use to only run essential ECAL tests (expert only). This will override your test mask]\n");
       lprintf("For test mask, the bit map is: \n");
       lprintf("0: fec_test, 1: board_id, 2: cgt_test, 3: crate_cbal\n");
       lprintf("4: ped_run, 5: set_ttot, 6: get_ttot, 7: disc_check\n");
       lprintf("8: gtvalid_test, 9: zdisc, 10: find_noise\n");
+      lprintf("Mapping for crates to set individual slot masks:\n");
+      lprintf("10 11 12 13 14 15 16 17 18\n");
+      lprintf(" :  ;  <  =  >  ?  @  A  B");
       goto err;
     }
     uint32_t crateMask = GetUInt(input,'c',0x0);
+    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
     uint32_t slotMasks[MAX_XL3_CON];
-    GetMultiUInt(input,MAX_XL3_CON,'s',slotMasks,0x0);
+    for(int i = 0; i < MAX_XL3_CON; i++){
+       char crates = '0'+i;
+       slotMasks[i] = GetUInt(input,crates,slotMask);
+    }
     uint32_t testMask = GetUInt(input,'t',0xFFFFFFFF);
     int quickFlag = GetFlag(input,'q');
     char loadECAL[500];
@@ -1534,12 +1541,13 @@ void *ControllerLink::ProcessCommand(void *arg)
 
   }else if (strncmp(input,"find_noise",10) == 0){
     if (GetFlag(input,'h')){
-      lprintf("Usage: find_noise -c [crate mask (hex)] -(00-18) [slot masks (hex)] -s [all slot masks (hex)] -c (include individual channel threshold tuning) -d (update database)\n");
+      lprintf("Usage: find_noise -c [crate mask (hex)] -(00-18) [slot masks (hex)] -s [all slot masks (hex)] -f [ped frequency (int)] -c (include individual channel threshold tuning) -d (update database)\n");
       goto err;
     }
     uint32_t crateMask = GetUInt(input,'c',0x4);
     uint32_t slotMasks[MAX_XL3_CON];
     GetMultiUInt(input,MAX_XL3_CON,'s',slotMasks,0xFFFF);
+    float frequency = GetFloat(input,'f',20);
     int channel = GetFlag(input,'c');
     int updateDB = GetFlag(input,'d');
     int busy = LockConnections(1,crateMask);
@@ -1550,7 +1558,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    FindNoise(crateMask,slotMasks,20,1,channel,updateDB);
+    FindNoise(crateMask,slotMasks,frequency,1,channel,updateDB);
     UnlockConnections(1,crateMask);
 
   }else if (strncmp(input,"dac_sweep",9) == 0){
