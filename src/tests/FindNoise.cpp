@@ -12,7 +12,6 @@
 #include "FindNoise.h"
 
 
-
 int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useDebug, int channel, int updateDB, int ecal)
 {
   lprintf("*** Starting Noise Run *****************\n");
@@ -441,11 +440,11 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                 // CMOS rate polling is done on bottom and top 8 slot seperately,
                 // thus the two slotIter counters and this if/else condition
                 if(j < 8){
-                   xl3s[i]->GetCmosTotalCount(slotMasks[i], total_count1);
+                   xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF, total_count1);
                    readout_noise[i*16*32+j*32+k] = total_count1[slotIter][k];
                 }
                 else{ 
-                   xl3s[i]->GetCmosTotalCount(slotMasks[i], total_count1);
+                   xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF00, total_count1);
                    readout_noise[i*16*32+j*32+k] = total_count1[slotIter2][k];
                 }
 
@@ -454,11 +453,11 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                   usleep(SLEEP_TIME);
 
                 if(j < 8){ 
-                   xl3s[i]->GetCmosTotalCount(slotMasks[i], total_count1);
+                   xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF, total_count1);
                    readout_noise[i*16*32+j*32+k] = total_count1[slotIter][k] - readout_noise[i*16*32+j*32+k];
                 }
                 else{ 
-                   xl3s[i]->GetCmosTotalCount(slotMasks[i], total_count1);
+                   xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF00, total_count1);
                    readout_noise[i*16*32+j*32+k] = total_count1[slotIter2][k] - readout_noise[i*16*32+j*32+k];
                 }
 
