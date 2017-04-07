@@ -1490,26 +1490,25 @@ void *ControllerLink::ProcessCommand(void *arg)
 
   }else if (strncmp(input,"ecal",4) == 0){
     if (GetFlag(input,'h')){
-      lprintf("Usage: ecal -c [crate mask (hex)] -s [all slot masks (hex)] -(00-18) [one slot mask (hex)]\n");
+      lprintf("Usage: ecal -c [crate mask (hex)] -s [all slot masks (hex)] -(0-18) [one slot mask (hex)] SEE MAPPING FOR 10-18 below.\n");
       lprintf("-l [ecal id to update / finish tests (string)] -t [test mask to update / finish (hex)]\n");
       lprintf("-q [quick flag: use to only run essential ECAL tests (expert only). This will override your test mask]\n");
       lprintf("For test mask, the bit map is: \n");
       lprintf("0: fec_test, 1: board_id, 2: cgt_test, 3: crate_cbal\n");
       lprintf("4: ped_run, 5: set_ttot, 6: get_ttot, 7: disc_check\n");
       lprintf("8: gtvalid_test, 9: zdisc, 10: find_noise\n");
+      lprintf("Mapping for crates to set individual slot masks:\n");
+      lprintf("10 11 12 13 14 15 16 17 18\n");
+      lprintf(" :  ;  <  =  >  ?  @  A  B");
       goto err;
     }
     uint32_t crateMask = GetUInt(input,'c',0x0);
+    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
     uint32_t slotMasks[MAX_XL3_CON];
     for(int i = 0; i < MAX_XL3_CON; i++){
-       char crates;
-       if(i < 10)
-          crates = '0'+i;
-       else
-          crates = i;
-       slotMasks[i] = GetUInt(input,crates,0xFFFF);
+       char crates = '0'+i;
+       slotMasks[i] = GetUInt(input,crates,slotMask);
     }
-    GetMultiUInt(input,MAX_XL3_CON,'s',slotMasks,0x0);
     uint32_t testMask = GetUInt(input,'t',0xFFFFFFFF);
     int quickFlag = GetFlag(input,'q');
     char loadECAL[500];
