@@ -310,11 +310,11 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                 doneornot = 1;
               if (error_channel[i][j] & 0x1<<k)
                 errorornot = 1;
-              printf("%2d %2d %2d (%1d, %1d): %3d, %7u (%.0f) ",i,j,k,doneornot,errorornot,current_vthr[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k],frequency*(2*SLEEP_TIME/1e6+0.25)+1);
+              printf("%2d %2d %2d (%1d, %1d): %3d, %7u (%.0f) ",i,j,k,doneornot,errorornot,current_vthr[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k],frequency*(2*SLEEP_TIME/1e6+0.025)+1);
               if (!((0x1<<k) & error_channel[i][j])){
                 if (!((0x1<<k) & done_channel[i][j])){
                   // check if there were more hits than what we put in (plus 1 second extra fudge factor for now)
-                  if (readout_noise[i*16*32+j*32+k] > frequency*(2*SLEEP_TIME/1e6+0.25)+1){
+                  if (readout_noise[i*16*32+j*32+k] > frequency*(2*SLEEP_TIME/1e6+0.025)+1){
                     // mark that we've been below the noise
                     found_below[i][j] |= 0x1<<k;
                     // we've found the point where we start getting noise. step back up one
@@ -349,7 +349,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                   }
                 }else{
                   // since we're already done, shouldn't have noise now, so double check
-                  if (readout_noise[i*16*32+j*32+k] > frequency*(2*SLEEP_TIME/1e6+0.25)+1){
+                  if (readout_noise[i*16*32+j*32+k] > frequency*(2*SLEEP_TIME/1e6+0.025)+1){
                     // take it out of done mask
                     done_channel[i][j] &= ~(0x1<<k);
                     // step back up one
@@ -461,7 +461,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                    readout_noise[i*16*32+j*32+k] = total_count1[slotIter2][k] - readout_noise[i*16*32+j*32+k];
                 }
 
-                printf("%2d %2d %2d: %3d, %7u (%.0f) \n",i,j,k,current_vthr2[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k],frequency*(2*SLEEP_TIME/1e6+0.25)+1);
+                printf("%2d %2d %2d: %3d, %7u (%.0f) \n",i,j,k,current_vthr2[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k],frequency*(2*SLEEP_TIME/1e6+0.025)+1);
 
                 // First check for issues, if there is one, max the threshold
                 if (current_vthr2[i*16*32+j*32+k] <= vthr_zeros[i*16*32+j*32+k] 
@@ -470,14 +470,17 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                   current_vthr2[i*16*32+j*32+k] = 255;
                   printf("Done Error: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
                   done = 1;
+                  break;
                 }
                 // Look for thresholds at or below 5 counts, set hard limit there
-                else if(current_vthr2[i*16*32+j*32+k] - vthr_zeros[i*16*32+j*32+k] <= 5){
-                  current_vthr2[i*16*32+j*32+k] = 5;
-                  done = 1 
+                else if((current_vthr2[i*16*32+j*32+k] - vthr_zeros[i*16*32+j*32+k]) < 6){
+                  current_vthr2[i*16*32+j*32+k] = vthr_zeros[i*16*32+j*32+k] + 5;
+                  printf("Done Min Thresh: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
+                  done = 1;
+                  break;
                 }
                 // Channel is noisy, if its not the first step, step the threshold back up
-                else if (readout_noise[i*16*32+j*32+k] > frequency*(2*SLEEP_TIME/1e6+0.25)+1){
+                if (readout_noise[i*16*32+j*32+k] > frequency*(2*SLEEP_TIME/1e6+0.025)+1){
                   if(steps > 0){
                     current_vthr2[i*16*32+j*32+k]++;
                   }
@@ -488,6 +491,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                 else if (steps == 3){
                   printf("Done: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
                   done = 1;
+                  break;
                 }
                 // Channel is quiet, step the threshold down and try again
                 else{

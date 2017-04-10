@@ -1490,16 +1490,23 @@ void *ControllerLink::ProcessCommand(void *arg)
 
   }else if (strncmp(input,"ecal",4) == 0){
     if (GetFlag(input,'h')){
-      lprintf("Usage: ecal -c [crate mask (hex)] -s [all slot masks (hex)] -(0-18) [one slot mask (hex)] SEE MAPPING FOR 10-18 below.\n");
-      lprintf("-l [ecal id to update / finish tests (string)] -t [test mask to update / finish (hex)]\n");
-      lprintf("-q [quick flag: use to only run essential ECAL tests (expert only). This will override your test mask]\n");
+      lprintf("Usage: \n");
+      lprintf("ecal -c [crate mask (hex)] \n");
+      lprintf("-s [all slot masks (hex)] \n");
+      lprintf("-l [ecal id to update / finish tests (string)] \n");
+      lprintf("-t [test mask to update / finish (hex)]\n");
       lprintf("For test mask, the bit map is: \n");
       lprintf("0: fec_test, 1: board_id, 2: cgt_test, 3: crate_cbal\n");
       lprintf("4: ped_run, 5: set_ttot, 6: get_ttot, 7: disc_check\n");
       lprintf("8: gtvalid_test, 9: zdisc, 10: find_noise\n");
+      lprintf("-q [quick flag: use to only run essential ECAL tests (expert only) \n");
+      lprintf("If you want to do different slot masks for the different crates in the ECAL:\n");
+      lprintf("-(char) [one slot mask (hex)] SEE MAPPING BELOW FOR CHAR TO CRATE MAPPING.\n");
       lprintf("Mapping for crates to set individual slot masks:\n");
-      lprintf("10 11 12 13 14 15 16 17 18\n");
-      lprintf(" :  ;  <  =  >  ?  @  A  B");
+      lprintf("0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 \n");
+      lprintf("0 1 2 3 4 5 6 7 8 9  :  ;  <  =  >  ?  @  A  B  C \n");
+      lprintf("Example: ecal -c 800e -s ffff -? fffe \n");
+      lprintf("Would do an ECAL for all slots on crates 1,2,and 3 and skip slot 0 on crate 15 \n");
       goto err;
     }
     uint32_t crateMask = GetUInt(input,'c',0x0);

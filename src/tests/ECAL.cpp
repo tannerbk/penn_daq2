@@ -145,17 +145,6 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
         CrateInit(i,slotMasks[i],1,0,0,0,0,0,0,0);
     MTCInit(1);
 
-    lprintf("------------------------------------------\n");
-    lprintf("If there were any problems initializing the crates, type quit to exit. Otherwise hit enter to continue.\n");
-    contConnection->GetInput(comments);
-    if (strncmp("quit",comments,4) == 0){
-      lprintf("Exiting ECAL\n");
-      fclose(ecalLogFile);
-      return 0;
-    }
-    lprintf("------------------------------------------\n");
-
-
     if (strlen(loadECAL) == 0){
       lprintf("Creating ECAL document...\n");
       PostECALDoc(crateMask,slotMasks,logName,ecalID);
@@ -260,7 +249,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     if ((0x1<<testCounter) & testMask)
       for (int i=0;i<MAX_XL3_CON;i++)
         if ((0x1<<i) & crateMask)
-          FindNoise((0x1<<i),slotMasks,100,1,1,1,1);
+          FindNoise((0x1<<i),slotMasks,200,1,1,1,1);
 
     lprintf("ECAL finished!\n");
 
