@@ -12,7 +12,6 @@
 #include "FindNoise.h"
 
 
-
 int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useDebug, int channel, int updateDB, int ecal)
 {
   lprintf("*** Starting Noise Run *****************\n");
@@ -126,7 +125,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
 
   // set up mtcd for pulsing continuously
   if (mtc->SetupPedestals(frequency,DEFAULT_PED_WIDTH,DEFAULT_GT_DELAY,DEFAULT_GT_FINE_DELAY,
-        crateMask,crateMask)){
+        crateMask, crateMask | MSK_TUB | MSK_TUB_B)){
     lprintf("Error setting up MTC. Exiting\n");
     free(vthr_zeros);
     free(current_vthr);
@@ -407,7 +406,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
 
     // we should now have every channel with no extra noise. Now lower each
     // channel one by one, make sure it wasn't some other noisy channel making it
-    // look noisy
+    // look noisy.
   if (channel){
     for (int i=0;i<MAX_XL3_CON;i++){
       if ((0x1<<i) & crateMask){
@@ -441,11 +440,11 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                 // CMOS rate polling is done on bottom and top 8 slot seperately,
                 // thus the two slotIter counters and this if/else condition
                 if(j < 8){
-                   xl3s[i]->GetCmosTotalCount(slotMasks[i], total_count1);
+                   xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF, total_count1 );
                    readout_noise[i*16*32+j*32+k] = total_count1[slotIter][k];
                 }
                 else{ 
-                   xl3s[i]->GetCmosTotalCount(slotMasks[i], total_count1);
+                   xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF00, total_count1);
                    readout_noise[i*16*32+j*32+k] = total_count1[slotIter2][k];
                 }
 
@@ -454,17 +453,17 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                   usleep(SLEEP_TIME);
 
                 if(j < 8){ 
-                   xl3s[i]->GetCmosTotalCount(slotMasks[i], total_count1);
+                   xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF, total_count1 );
                    readout_noise[i*16*32+j*32+k] = total_count1[slotIter][k] - readout_noise[i*16*32+j*32+k];
                 }
                 else{ 
-                   xl3s[i]->GetCmosTotalCount(slotMasks[i], total_count1);
+                   xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF00, total_count1);
                    readout_noise[i*16*32+j*32+k] = total_count1[slotIter2][k] - readout_noise[i*16*32+j*32+k];
                 }
 
                 printf("%2d %2d %2d: %3d, %7u (%.0f) \n",i,j,k,current_vthr2[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k],frequency*(2*SLEEP_TIME/1e6+0.25)+1);
 
-                // First check for issues
+                // First check for issues, if there is one, max the threshold
                 if (current_vthr2[i*16*32+j*32+k] <= vthr_zeros[i*16*32+j*32+k] 
                     || current_vthr2[i*16*32+j*32+k] == 255
                     || current_vthr2[i*16*32+j*32+k] == 0){
@@ -472,20 +471,25 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                   printf("Done Error: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
                   done = 1;
                 }
+                // Look for thresholds at or below 5 counts, set hard limit there
+                else if(current_vthr2[i*16*32+j*32+k] - vthr_zeros[i*16*32+j*32+k] <= 5){
+                  current_vthr2[i*16*32+j*32+k] = 5;
+                  done = 1 
+                }
+                // Channel is noisy, if its not the first step, step the threshold back up
                 else if (readout_noise[i*16*32+j*32+k] > frequency*(2*SLEEP_TIME/1e6+0.25)+1){
                   if(steps > 0){
                     current_vthr2[i*16*32+j*32+k]++;
                   }
-                  //else if(steps == 0 && readout_noise[i*16*32+j*32+k] > 10*frequency*(2*SLEEP_TIME/1e6+0.25)+1){
-                  //  current_vthr2[i*16*32+j*32+k]++;
-                  //} 
                   printf("Done: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
                   done = 1;
                 }
-                else if (steps == 2){
+                // Don't step any threshold down more then 3 times
+                else if (steps == 3){
                   printf("Done: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
                   done = 1;
                 }
+                // Channel is quiet, step the threshold down and try again
                 else{
                   current_vthr2[i*16*32+j*32+k]--;
                   steps++;
