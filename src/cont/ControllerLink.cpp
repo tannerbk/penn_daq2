@@ -155,8 +155,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t address = GetUInt(input,'a',0x12000007);
-    uint32_t data = GetUInt(input,'d',0x0);
+    uint32_t address = GetUInt(input,"a",0x12000007);
+    uint32_t data = GetUInt(input,"d",0x0);
     int busy = LockConnections(0,0x1<<crateNum);
     if (busy){
       if (busy > 9)
@@ -181,7 +181,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     int crateNum = GetInt(input,'c',2);
     int xilinxLoadNormal = GetFlag(input,'x');
     int xilinxLoadCald = GetFlag(input,'X');
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
     int useVBal = GetFlag(input,'B');
     int useVThr = GetFlag(input,'T');
     int useTDisc = GetFlag(input,'D');
@@ -233,7 +233,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     }
     int crateNum = GetInt(input,'c',2);
     int reg = GetInt(input,'r',0);
-    uint32_t data = GetUInt(input,'d',0x0);
+    uint32_t data = GetUInt(input,"d",0x0);
     int busy = LockConnections(0,0x1<<crateNum);
     if (busy){
       if (busy > 9)
@@ -252,8 +252,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t address = GetUInt(input,'a',0x0);
-    uint32_t data = GetUInt(input,'d',0x0);
+    uint32_t address = GetUInt(input,"a",0x0);
+    uint32_t data = GetUInt(input,"d",0x0);
     int busy = LockConnections(0,0x1<<crateNum);
     if (busy){
       if (busy > 9)
@@ -324,7 +324,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     }
     int crateNum = GetInt(input,'c',2);
     int mode = GetFlag(input,'n');
-    uint32_t dataAvailMask = GetUInt(input,'s',0xFFFF);
+    uint32_t dataAvailMask = GetUInt(input,"s",0xFFFF);
     int busy = LockConnections(0,0x1<<crateNum);
     if (busy){
       if (busy > 9)
@@ -415,9 +415,9 @@ void *ControllerLink::ProcessCommand(void *arg)
     }
     int crateNum = GetInt(input,'c',2);
     uint32_t dacs[3];
-    dacs[0] = GetUInt(input,'0',0xFFFFFFFF);
-    dacs[1] = GetUInt(input,'1',0xFFFFFFFF);
-    dacs[2] = GetUInt(input,'2',0xFFFFFFFF);
+    dacs[0] = GetUInt(input,"0",0xFFFFFFFF);
+    dacs[1] = GetUInt(input,"1",0xFFFFFFFF);
+    dacs[2] = GetUInt(input,"2",0xFFFFFFFF);
     int busy = LockConnections(0,0x1<<crateNum);
     if (busy){
       if (busy > 9)
@@ -457,7 +457,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     int crateNum = GetInt(input,'c',2);
     int slotNum = GetInt(input,'s',13);
     int reg = GetInt(input,'r',0);
-    uint32_t data = GetUInt(input,'d',0x0);
+    uint32_t data = GetUInt(input,"d",0x0);
     int busy = LockConnections(0,0x1<<crateNum);
     if (busy){
       if (busy > 9)
@@ -515,8 +515,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
-    uint32_t chanMask = GetUInt(input,'p',0xFFFFFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
+    uint32_t chanMask = GetUInt(input,"p",0xFFFFFFFF);
     int dacValue = GetInt(input,'d',255);
     int busy = LockConnections(0,0x1<<crateNum);
     if (busy){
@@ -625,7 +625,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int reg = GetInt(input,'r',0);
-    uint32_t data = GetUInt(input,'d',0x0);
+    uint32_t data = GetUInt(input,"d",0x0);
     int busy = LockConnections(1,0x0);
     if (busy){
       if (busy > 9)
@@ -643,7 +643,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       lprintf("Usage: mtc_read -a [address (hex)]\n");
       goto err;
     }
-    int address = GetUInt(input,'a',0x0);
+    int address = GetUInt(input,"a",0x0);
     int busy = LockConnections(1,0x0);
     if (busy){
       if (busy > 9)
@@ -660,8 +660,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       lprintf("Usage: mtc_write -a [address (hex)] -d [data (hex)]\n");
       goto err;
     }
-    uint32_t address = GetUInt(input,'a',0x0);
-    uint32_t data = GetUInt(input,'d',0x0);
+    uint32_t address = GetUInt(input,"a",0x0);
+    uint32_t data = GetUInt(input,"d",0x0);
     int busy = LockConnections(1,0x0);
     if (busy){
       if (busy > 9)
@@ -714,7 +714,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
 
-    uint32_t mask = GetUInt(input,'m',0x0);
+    uint32_t mask = GetUInt(input,"m",0x0);
     int ored = GetFlag(input,'o');
     int busy = LockConnections(1,0x0);
     if (busy){
@@ -739,7 +739,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
 
-    uint32_t mask = GetUInt(input,'m',0x0);
+    uint32_t mask = GetUInt(input,"m",0x0);
     int ored = GetFlag(input,'o');
     int busy = LockConnections(1,0x0);
     if (busy){
@@ -764,7 +764,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
 
-    uint32_t mask = GetUInt(input,'m',0x0);
+    uint32_t mask = GetUInt(input,"m",0x0);
     int ored = GetFlag(input,'o');
     int busy = LockConnections(1,0x0);
     if (busy){
@@ -911,7 +911,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    int slotMask = GetUInt(input,'s',0xFFFF);
+    int slotMask = GetUInt(input,"s",0xFFFF);
     int updateLocation = GetFlag(input,'l');
     int busy = LockConnections(0,0x1<<crateNum);
     if (busy){
@@ -931,7 +931,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
     int upper = GetInt(input,'u',3550);
     int lower = GetInt(input,'l',3000);
     int num = GetInt(input,'n',550);
@@ -955,8 +955,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
-    uint32_t channelMask = GetUInt(input,'p',0xFFFFFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
+    uint32_t channelMask = GetUInt(input,"p",0xFFFFFFFF);
     int update = GetFlag(input,'d');
     int busy = LockConnections(1,0x1<<crateNum);
     if (busy){
@@ -982,8 +982,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
-    uint32_t channelMask = GetUInt(input,'p',0xFFFFFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
+    uint32_t channelMask = GetUInt(input,"p",0xFFFFFFFF);
     float freq = GetFloat(input,'f',0);
     int gtDelay = GetInt(input,'t',DEFAULT_GT_DELAY);
     int pedWidth = GetInt(input,'w',DEFAULT_PED_WIDTH);
@@ -1012,8 +1012,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
-    uint32_t channelMask = GetUInt(input,'p',0xFFFFFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
+    uint32_t channelMask = GetUInt(input,"p",0xFFFFFFFF);
     int update = GetFlag(input,'d');
     int busy = LockConnections(1,0x1<<crateNum);
     if (busy){
@@ -1033,7 +1033,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
     int numPeds = GetInt(input,'n',100000);
     int update = GetFlag(input,'d');
     int busy = LockConnections(1,0x1<<crateNum);
@@ -1055,7 +1055,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     }
     int crateNum = GetInt(input,'c',2);
     int update = GetFlag(input,'d');
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
     int busy = LockConnections(0,0x1<<crateNum);
     if (busy){
       if (busy > 9)
@@ -1074,7 +1074,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
     int update = GetFlag(input,'d');
     int busy = LockConnections(1,0x1<<crateNum);
     if (busy){
@@ -1097,7 +1097,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     int crateNum = GetInt(input,'c',2);
     uint32_t slotMasks[MAX_XL3_CON];
     GetMultiUInt(input,MAX_XL3_CON,'s',slotMasks,0xFFFF);
-    uint32_t channelMask = GetUInt(input,'p',0xFFFFFFFF);
+    uint32_t channelMask = GetUInt(input,"p",0xFFFFFFFF);
     float gtCutoff = GetFloat(input,'g',410);
     int twiddleOn = GetFlag(input,'t');
     int update = GetFlag(input,'d');
@@ -1120,7 +1120,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
     int numPeds = GetInt(input,'n',50);
     int update = GetFlag(input,'d');
     int busy = LockConnections(1,0x1<<crateNum);
@@ -1164,8 +1164,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
-    uint32_t channelMask = GetUInt(input,'p',0xFFFFFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
+    uint32_t channelMask = GetUInt(input,"p",0xFFFFFFFF);
     int lower = GetInt(input,'l',300);
     int upper = GetInt(input,'u',1000);
     float frequency = GetFloat(input,'f',0);
@@ -1193,8 +1193,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
-    uint32_t channelMask = GetUInt(input,'p',0xFFFFFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
+    uint32_t channelMask = GetUInt(input,"p",0xFFFFFFFF);
     int dacValue = GetInt(input,'v',255);
     float frequency = GetFloat(input,'f',10);
     int update = GetFlag(input,'d');
@@ -1218,8 +1218,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
-    uint32_t channelMask = GetUInt(input,'p',0xFFFFFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
+    uint32_t channelMask = GetUInt(input,"p",0xFFFFFFFF);
     int dacValue = GetInt(input,'v',255);
     float frequency = GetFloat(input,'f',10);
     int update = GetFlag(input,'d');
@@ -1244,8 +1244,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
-    uint32_t channelMask = GetUInt(input,'p',0xFFFFFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
+    uint32_t channelMask = GetUInt(input,"p",0xFFFFFFFF);
     int triggerSelect = GetInt(input,'t',0);
     float frequency = GetFloat(input,'f',20);
     int dacCounts = GetInt(input,'v',0);
@@ -1271,7 +1271,7 @@ void *ControllerLink::ProcessCommand(void *arg)
           "-q (quick mode - samples every 10th dac count)\n");
       goto err;
     }
-    uint32_t crateMask = GetUInt(input,'c',0x4);
+    uint32_t crateMask = GetUInt(input,"c",0x4);
     uint32_t slotMasks[MAX_XL3_CON];
     GetMultiUInt(input,MAX_XL3_CON,'s',slotMasks,0xFFFF);
     int nhitMax = GetInt(input,'n',0);
@@ -1299,7 +1299,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
     int targetTime = GetInt(input,'t',400);
     int update = GetFlag(input,'d');
     int busy = LockConnections(1,0x1<<crateNum);
@@ -1320,7 +1320,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
     int targetTime = GetInt(input,'t',400);
     int update = GetFlag(input,'d');
     int busy = LockConnections(1,0x1<<crateNum);
@@ -1341,7 +1341,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
     int update = GetFlag(input,'d');
     int busy = LockConnections(0,0x1<<crateNum);
     if (busy){
@@ -1380,7 +1380,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
     int offset = GetInt(input,'o',0);
     float rate = GetFloat(input,'r',10000);
     int update = GetFlag(input,'d');
@@ -1411,7 +1411,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("Usage: run_pedestals_end -c [crate mask (hex)]\n");
       goto err;
     }
-    uint32_t crateMask = GetUInt(input,'c',0x4);
+    uint32_t crateMask = GetUInt(input,"c",0x4);
     int busy = LockConnections(mtc,crateMask*crate);
     if (busy){
       if (busy > 9)
@@ -1444,10 +1444,10 @@ void *ControllerLink::ProcessCommand(void *arg)
       lprintf("\n");
       goto err;
     }
-    uint32_t crateMask = GetUInt(input,'c',0x4);
+    uint32_t crateMask = GetUInt(input,"c",0x4);
     uint32_t slotMasks[MAX_XL3_CON];
     GetMultiUInt(input,MAX_XL3_CON,'s',slotMasks,0xFFFF);
-    uint32_t channelMask = GetUInt(input,'p',0xFFFFFFFF);
+    uint32_t channelMask = GetUInt(input,"p",0xFFFFFFFF);
     float frequency = GetFloat(input,'f',1000.0);
     int gtDelay = GetInt(input,'t',DEFAULT_GT_DELAY);
     int pedWidth = GetInt(input,'w',DEFAULT_PED_WIDTH);
@@ -1474,8 +1474,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
-    uint32_t testMask = GetUInt(input,'t',0xFFFFFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
+    uint32_t testMask = GetUInt(input,"t",0xFFFFFFFF);
     int skip = GetFlag(input,'q');
     int busy = LockConnections(1,0x1<<crateNum);
     if (busy){
@@ -1509,14 +1509,14 @@ void *ControllerLink::ProcessCommand(void *arg)
       lprintf("Would do an ECAL for all slots on crates 1,2,and 3 and skip slot 0 on crate 15 \n");
       goto err;
     }
-    uint32_t crateMask = GetUInt(input,'c',0x0);
-    uint32_t slotMask = GetUInt(input,'s',0x0);
+    uint32_t crateMask = GetUInt(input,"c",0x0);
+    uint32_t slotMask = GetUInt(input,"s",0x0);
     uint32_t slotMasks[MAX_XL3_CON];
     for(int i = 0; i < MAX_XL3_CON; i++){
        char crates = '0'+i;
-       slotMasks[i] = GetUInt(input,crates,slotMask);
+       slotMasks[i] = GetUInt(input,&crates,slotMask);
     }
-    uint32_t testMask = GetUInt(input,'t',0xFFFFFFFF);
+    uint32_t testMask = GetUInt(input,"t",0xFFFFFFFF);
     int quickFlag = GetFlag(input,'q');
     char loadECAL[500];
     memset(loadECAL,'\0',sizeof(loadECAL));
@@ -1538,7 +1538,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       lprintf("You don't need to specify a crate or slot mask if you wish to upload FEC docs for all crate/slots in the ECAL.\n");
       goto err;
     }
-    uint32_t crateMask = GetUInt(input,'c',0x0);
+    uint32_t crateMask = GetUInt(input,"c",0x0);
     uint32_t slotMasks[MAX_XL3_CON];
     GetMultiUInt(input,MAX_XL3_CON,'s',slotMasks,0x0);
     char loadECAL[500];
@@ -1551,7 +1551,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       lprintf("Usage: find_noise -c [crate mask (hex)] -(00-18) [slot masks (hex)] -s [all slot masks (hex)] -f [ped frequency (int)] -c (include individual channel threshold tuning) -d (update database)\n");
       goto err;
     }
-    uint32_t crateMask = GetUInt(input,'c',0x4);
+    uint32_t crateMask = GetUInt(input,"c",0x4);
     uint32_t slotMasks[MAX_XL3_CON];
     GetMultiUInt(input,MAX_XL3_CON,'s',slotMasks,0xFFFF);
     float frequency = GetFloat(input,'f',20);
@@ -1574,8 +1574,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    uint32_t slotMask = GetUInt(input,'s',0xFFFF);
-    uint32_t dacMask = GetUInt(input,'m',0xFFFFFFFF);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
+    uint32_t dacMask = GetUInt(input,"m",0xFFFFFFFF);
     int updateDB = GetFlag(input,'d');
     int dacNum = GetInt(input,'n',-1);
     int busy = LockConnections(0,0x1<<crateNum);
