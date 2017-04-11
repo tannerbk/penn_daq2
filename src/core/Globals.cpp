@@ -262,7 +262,7 @@ int GetInt(const char *input, char flag, int dflt)
   return dflt; 
 }
 
-uint32_t GetUInt(const char *input, char flag, uint32_t dflt)
+uint32_t GetUInt(const char *input, const char *flag, uint32_t dflt, const uint32_t flag_len)
 {
   char buffer[10000];
   memset(buffer,'\0',10000);
@@ -271,7 +271,7 @@ uint32_t GetUInt(const char *input, char flag, uint32_t dflt)
   words = strtok(buffer, " ");
   while (words != NULL){
     if (words[0] == '-'){
-      if (words[1] == flag){
+        if(strncmp(&words[1], flag, flag_len) == 0){
         if ((words2 = strtok(NULL, " ")) != NULL){
           return strtoul(words2,(char**)NULL,16);
         }
