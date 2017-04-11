@@ -1554,7 +1554,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     uint32_t crateMask = GetUInt(input,'c',0x4);
     uint32_t slotMasks[MAX_XL3_CON];
     GetMultiUInt(input,MAX_XL3_CON,'s',slotMasks,0xFFFF);
-    float frequency = GetFloat(input,'f',20);
+    float frequency = GetFloat(input,'f',200);
     int channel = GetFlag(input,'c');
     int updateDB = GetFlag(input,'d');
     int busy = LockConnections(1,crateMask);

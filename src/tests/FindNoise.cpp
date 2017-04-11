@@ -418,7 +418,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
 
               int steps = 0;
               int done = 0;
-              while (done == 0){
+              while (true){
 
                 slot_nums[k] = j;
                 dac_nums[k] = d_vthr[k];
@@ -469,14 +469,25 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                     || current_vthr2[i*16*32+j*32+k] == 0){
                   current_vthr2[i*16*32+j*32+k] = 255;
                   printf("Done Error: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
-                  done = 1;
                   break;
                 }
                 // Look for thresholds at or below 5 counts, set hard limit there
                 else if((current_vthr2[i*16*32+j*32+k] - vthr_zeros[i*16*32+j*32+k]) < 6){
-                  current_vthr2[i*16*32+j*32+k] = vthr_zeros[i*16*32+j*32+k] + 5;
+                  if(steps == 0){
+                    current_vthr2[i*16*32+j*32+k] = vthr_zeros[i*16*32+j*32+k] + 5;
+                  }
+                  else if (readout_noise[i*16*32+j*32+k] < frequency*(2*SLEEP_TIME/1e6+0.025)+1){
+                    current_vthr2[i*16*32+j*32+k] = vthr_zeros[i*16*32+j*32+k] + 5;
+                  }
+                  else{
+                    current_vthr2[i*16*32+j*32+k] = vthr_zeros[i*16*32+j*32+k] + 6;
+                  }
                   printf("Done Min Thresh: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
-                  done = 1;
+                  break;
+                }
+                // Look for channels that are too noisy now, try and step them up 1 count
+                if (readout_noise[i*16*32+j*32+k] > 10*frequency*(2*SLEEP_TIME/1e6+0.025)+1){
+                  current_vthr2[i*16*32+j*32+k]++;
                   break;
                 }
                 // Channel is noisy, if its not the first step, step the threshold back up
@@ -485,12 +496,11 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                     current_vthr2[i*16*32+j*32+k]++;
                   }
                   printf("Done: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
-                  done = 1;
+                  break;
                 }
                 // Don't step any threshold down more then 3 times
                 else if (steps == 3){
                   printf("Done: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
-                  done = 1;
                   break;
                 }
                 // Channel is quiet, step the threshold down and try again
