@@ -796,11 +796,12 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
           JsonNode *doc;
           CreateFECDBDoc(i,j,&doc,ecalconfig_doc);
 
+          int time[5];
           for(int testRan = 0; testRan < ntests; testRan++){
              count_tests[testRan]=0;
+             time[testRan] = 0;
           }
 
-          int time[5] = {0};
           for (int k=0;k<total_rows;k++){
             JsonNode *ecalone_row = json_find_element(ecal_rows,k);
             JsonNode *test_doc = json_find_member(ecalone_row,"value");
@@ -809,9 +810,10 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             for(int ttype=0; ttype<ntests; ttype++){
               if(strcmp(testtype, test_map[ttype])==0){
                 int timestamp = (int)json_get_number(json_find_member(test_doc,"timestamp"));
-                if(time[ttype] == 0 || timestamp > time[ttype]){
-                  time[ttype] = timestamp;
-                  if ((json_get_number(json_find_member(config,"crate_id")) == i) && (json_get_number(json_find_member(config,"slot")) == j)){
+                if ((json_get_number(json_find_member(config,"crate_id")) == i) && (json_get_number(json_find_member(config,"slot")) == j)){
+                  if(time[ttype] == 0 || timestamp > time[ttype]){
+                    time[ttype] = timestamp;
+                    printf("test type %s \n", test_map[ttype], timestamp); 
                     AddECALTestResults(doc,test_doc);
                   }
                 }
