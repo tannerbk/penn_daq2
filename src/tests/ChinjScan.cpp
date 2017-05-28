@@ -29,7 +29,9 @@ int ChinjScan(int crateNum, uint32_t slotMask, uint32_t channelMask, float frequ
   uint32_t result, select_reg;
   uint32_t default_ch_mask;
   int chinj_err[16];
-  float pedestal_charge[32]={0};
+  float pedestal_qhl[32]={0};
+  float pedestal_qhs[32]={0};
+  float pedestal_qlx[32]={0};
 
   pmt_buffer = (uint32_t *) malloc( 0x20000*sizeof(uint32_t));
   ped = (struct pedestal *) malloc( 32 * sizeof(struct pedestal));
@@ -308,22 +310,24 @@ int ChinjScan(int crateNum, uint32_t slotMask, uint32_t channelMask, float frequ
                     ped[i].thiscell[j].qlxbar, ped[i].thiscell[j].qlxrms,
                     ped[i].thiscell[j].tacbar, ped[i].thiscell[j].tacrms);
               }
-              if(j==0 || j ==1){
+              if(j ==1){
+              //if(j==0 || j ==1){
                 if (dacvalue == 0){
-                  pedestal_charge[i] = ped[i].thiscell[j].qhlbar;
+                  pedestal_qhl[i] = ped[i].thiscell[j].qhlbar;
+                  pedestal_qhs[i] = ped[i].thiscell[j].qhsbar;
+                  pedestal_qlx[i] = ped[i].thiscell[j].qlxbar;
                 }
                 if (dacvalue == 250){ // Only the large DAC value
                   // Checks whether integrator is getting pmt input
-                  float charge_difference = ped[i].thiscell[j].qhlbar - pedestal_charge[i];
-                  if(charge_difference < pmt){
-                     chinj_err[slot_iter]++;
-                     if(j%2)
-                       scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2]++;
-                     else{
-                       scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2+1]++;
-                       lprintf("Difference between pedestal and max chinj is %4.1f\n",charge_difference); 
-                       lprintf("Probably missing pmt input channel %d\n", i);
-                     }
+                  float qhl_difference = abs(ped[i].thiscell[j].qhlbar - pedestal_qhl[i]);
+                  float qhs_difference = abs(ped[i].thiscell[j].qhsbar - pedestal_qhs[i]);
+                  float qlx_difference = abs(ped[i].thiscell[j].qlxbar - pedestal_qlx[i]);
+                  //if(qhl_difference < pmt){
+                  if(qhl_difference < 100 && qhs_difference < 100 && qlx_difference > 10){
+                    chinj_err[slot_iter]++;
+                    scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2]++;
+                    scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2+1]++;
+                    lprintf("Probably missing pmt input channel %d\n", i);
                   }
                 }
               }
