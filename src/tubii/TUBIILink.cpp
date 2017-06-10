@@ -5,6 +5,7 @@
 #include "NetUtils.h"
 #include "TUBIILink.h"
 
+#include <errno.h>
 
 TUBIILink::TUBIILink() : GenericLink() {
   fBytesLeft = 0;
