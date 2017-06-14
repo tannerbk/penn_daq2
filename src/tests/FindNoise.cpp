@@ -57,6 +57,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
               free(vthr_zeros);
               free(current_vthr);
               free(current_vthr2);
+              free(readout_noise);
               return -1;
             }
             JsonNode *viewdoc = json_decode(zdisc_response->resp.data);
@@ -67,6 +68,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
               free(vthr_zeros);
               free(current_vthr);
               free(current_vthr2);
+              free(readout_noise);
               return -1;
             }
             JsonNode *zdisc_doc = json_find_member(json_find_element(viewrows,0),"value");
@@ -97,6 +99,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
               free(vthr_zeros);
               free(current_vthr);
               free(current_vthr2);
+              free(readout_noise);
               return -1;
             }
             JsonNode *viewdoc = json_decode(zdisc_response->resp.data);
@@ -107,6 +110,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
               free(vthr_zeros);
               free(current_vthr);
               free(current_vthr2);
+              free(readout_noise);
               return -1;
             }
             JsonNode *zdisc_doc = json_find_member(json_find_element(viewrows,0),"value");
@@ -130,6 +134,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
     free(vthr_zeros);
     free(current_vthr);
     free(current_vthr2);
+    free(readout_noise);
     return -1;
   }
 
@@ -148,6 +153,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
             free(vthr_zeros);
             free(current_vthr);
             free(current_vthr2);
+            free(readout_noise);
             return -1;
           }
         }
@@ -519,20 +525,6 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
       }
     }
 
-    // Print the difference
-    for (int i=0;i<MAX_XL3_CON;i++){
-      if ((0x1<<i) & crateMask){
-        for (int j=0;j<16;j++){
-          if ((0x1<<j) & slotMasks[i]){
-            lprintf("Crate/Slot: %2d/%d \n",i,j); 
-            for (int k=0;k<32;k++){
-              lprintf("%2d: Thr-Zero: %3d %3d Abs. Thr: %3d %3d \n",k,current_vthr[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k],current_vthr2[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k], current_vthr[i*16*32+j*32+k], current_vthr2[i*16*32+j*32+k]);
-            }
-          }
-        }
-      }
-    }
-
     // Disable Peds, now lets go look for noisy channels
     mtc->DisablePulser();
 
@@ -592,19 +584,20 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                 }
 
                 if(readout_noise[i*16*32+j*32+k] > 10000){
-                  lprintf("Noisy > 10kHz: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
+                  lprintf("Noisy > 10kHz: %2d %2d %2d: %3d %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]);
                   current_vthr2[i*16*32+j*32+k] += 2;
                   count_noisy_channels+=1;
                   break;
                 } 
                 // Look for rates above 100Hz
-                if(readout_noise[i*16*32+j*32+k] > 100){
-                  lprintf("Noisy > 100Hz: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
+                else if(readout_noise[i*16*32+j*32+k] > 100){
+                  lprintf("Noisy > 100Hz: %2d %2d %2d: %3d %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]);
                   current_vthr2[i*16*32+j*32+k] += 1;
                   count_noisy_channels+=1;
                   break;
                 }
                 else{
+                  lprintf("Not Noisy: %2d %2d %2d: %3d %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]);
                   break;
                 }
               } // end while true
@@ -615,14 +608,28 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
               slotIter2++;
           }
         }
+        lprintf("Crate %d had %d noisy channels \n", i, count_noisy_channels);
+        // If too many noisy channels redo the crate
+        if(count_noisy_channels > 10){
+          i--;
+        }
       } // end loop over crates in crate mask
+    }
 
-      lprintf("Crate %d had %d noisy channels", i, count_noisy_channels);
-      // If too many noisy channels redo the crate
-      if(count_noisy_channels > 10){
-        i--;
+    // Print the difference
+    for (int i=0;i<MAX_XL3_CON;i++){
+      if ((0x1<<i) & crateMask){
+        for (int j=0;j<16;j++){
+          if ((0x1<<j) & slotMasks[i]){
+            lprintf("Crate/Slot: %2d/%d \n",i,j); 
+            for (int k=0;k<32;k++){
+              lprintf("%2d: Thr-Zero: %3d %3d Abs. Thr: %3d %3d \n",k,current_vthr[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k],current_vthr2[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k], current_vthr[i*16*32+j*32+k], current_vthr2[i*16*32+j*32+k]);
+            }
+          }
+        }
       }
     }
+
   } // end if channel
 
   if (updateDB){
