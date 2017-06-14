@@ -17,11 +17,14 @@ int GetTTot(int crateNum, uint32_t slotMask, int targetTime, int updateDB, int f
   uint16_t times[32*16];
   int tot_errors[16][32];
 
-  try {
-      tubii->SetECALBit(1);
-  } catch(const char* c) {
-      lprintf("Failed to connect to tubii...let's hope that cable is plugged in\n");
+  if(ecal == 0){ 
+    try {
+        tubii->SetECALBit(1);
+    } catch(const char* c) {
+        lprintf("Failed to connect to tubii.\n");
+    }
   }
+
   try {
 
     // setup the mtc with the triggers going to the TUB
@@ -91,9 +94,12 @@ int GetTTot(int crateNum, uint32_t slotMask, int targetTime, int updateDB, int f
   catch(const char* s){
     lprintf("GetTTot: %s\n",s);
   }
-  try {
-      tubii->SetECALBit(0);
-  } catch(const char* c) {
+  if(ecal == 0){ 
+    try {
+        tubii->SetECALBit(0);
+    } catch(const char* c) {
+        lprintf("Failed to connect to tubii.\n"); 
+    }
   }
 
   lprintf("****************************************\n");
@@ -112,10 +118,12 @@ int SetTTot(int crateNum, uint32_t slotMask, int targetTime, int updateDB, int f
   int num_dacs;
   int result;
 
-  try {
-      tubii->SetECALBit(1);
-  } catch(const char* c) {
-      lprintf("Failed to connect to tubii...let's hope that cable is plugged in\n");
+  if(ecal == 0){ 
+    try {
+        tubii->SetECALBit(1);
+    } catch(const char* c) {
+        lprintf("Failed to connect to tubii.\n");
+    }
   }
 
   try {
@@ -331,9 +339,13 @@ int SetTTot(int crateNum, uint32_t slotMask, int targetTime, int updateDB, int f
     lprintf("SetTTot: %s\n",s);
   }
 
-  try {
-      tubii->SetECALBit(0);
-  } catch(const char* c) { }
+  if(ecal == 0){ 
+    try {
+        tubii->SetECALBit(0);
+    } catch(const char* c) { 
+        lprintf("Failed to connect to tubii.\n");
+    }
+  }
 
   lprintf("****************************************\n");
   return 0;

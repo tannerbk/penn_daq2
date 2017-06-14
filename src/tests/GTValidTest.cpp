@@ -272,7 +272,7 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
         }
       }
       for (int j=0;j<32;j++){
-        lprintf(".");
+        lprintf("%d ",j);
         fflush(stdout);
         for (int crateNum=0;crateNum<20;crateNum++){
           if ((0x1<<crateNum) & crateMask){
