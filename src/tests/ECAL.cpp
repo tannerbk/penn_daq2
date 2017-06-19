@@ -198,6 +198,12 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
       if ((0x1<<i) & crateMask)
         CrateInit(i,slotMasks[i],0,1,0,0,0,0,0,0);
 
+    try {
+      tubii->SetECALBit(1);
+    } catch(const char* c) {
+      lprintf("Failed to connect to tubii.\n");
+    }
+
     if ((0x1<<testCounter) & testMask)
       for (int i=0;i<MAX_XL3_CON;i++)
         if ((0x1<<i) & crateMask)
@@ -214,6 +220,12 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
         if ((0x1<<i) & crateMask)
           GetTTot(i,slotMasks[i],400,1,0,1);
     testCounter++;
+
+    try {
+      tubii->SetECALBit(0);
+    } catch(const char* c) {
+      lprintf("Failed to connect to tubii.\n");
+    }
 
     for (int i=0;i<MAX_XL3_CON;i++)
       if ((0x1<<i) & crateMask)
