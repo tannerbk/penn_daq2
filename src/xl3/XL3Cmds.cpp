@@ -470,6 +470,51 @@ int DebuggingMode(int crateNum, int on)
   return 0;
 }
 
+int SetRelays(int crateNum, uint64_t mask)
+{
+  XL3Packet packet;
+  memset(&packet, 0, sizeof(XL3Packet));
+  packet.header.packetType = SET_HV_RELAYS_ID;
+  SetHVRelaysArgs *args = (SetHVRelaysArgs *) packet.payload;
+
+  lprintf("Setting Relays:%i %llu\n",crateNum,mask);
+  args->mask1 = mask & 0xffffffff;
+  args->mask2 = (mask >> 32);
+  SwapLongBlock(packet.payload,sizeof(SetHVRelaysArgs)/sizeof(uint32_t));
+  try{
+    xl3s[crateNum]->SendCommand(&packet);
+    SetHVRelaysResults* results = (SetHVRelaysResults*) packet.payload;
+    if(results->errorFlags) {
+      lprintf("Error occurred when setting relays\n");
+    }
+  }
+  catch(const char* s){
+    lprintf("SetRelays: %llu\n",mask);
+  }
+
+  return 0;
+}
+
+int GetRelays(int crateNum) {
+  XL3Packet packet;
+  memset(&packet, 0, sizeof(XL3Packet));
+  packet.header.packetType = GET_HV_RELAYS_ID;
+
+  try{
+    xl3s[crateNum]->SendCommand(&packet);
+    GetHVRelaysResults *results = (GetHVRelaysResults*) packet.payload;
+    SwapLongBlock(results,sizeof(GetHVRelaysResults)/sizeof(uint32_t));
+    if(results->relays_known) {
+	    lprintf("Relays = 0x%x 0x%x\n",results->mask1, results->mask2);
+    } else{
+	    lprintf("Relays unknown\n");
+    }
+  } catch(const char* s){
+	  lprintf("Error getting relays: %s\n",s);
+  }
+
+  return 0;
+}
 int ChangeMode(int crateNum, int mode, uint32_t dataAvailMask)
 {
   XL3Packet packet;
