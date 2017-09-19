@@ -410,9 +410,9 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
           for (int k=0;k<32;k++)
             current_vthr2[i*16*32+j*32+k] = current_vthr[i*16*32+j*32+k];
 
-    // we should now have every channel with no extra noise. Now lower each
-    // channel one by one, make sure it wasn't some other noisy channel making it
-    // look noisy.
+  // we should now have every channel with no extra noise. Now lower each
+  // channel one by one, make sure it wasn't some other noisy channel making it
+  // look noisy.
   if (channel){
     for (int i=0;i<MAX_XL3_CON;i++){
       if ((0x1<<i) & crateMask){
@@ -572,7 +572,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
 
                 // now we wait
                 for (int t=0;t<2;t++)
-                  usleep(SLEEP_TIME/10);
+                  usleep(SLEEP_TIME);
 
                 if(j < 8){ 
                    xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF, total_count1);
@@ -583,17 +583,11 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                    readout_noise[i*16*32+j*32+k] = total_count1[slotIter2][k] - readout_noise[i*16*32+j*32+k];
                 }
 
-                if(readout_noise[i*16*32+j*32+k] > 10000){
-                  lprintf("Noisy > 10kHz: %2d %2d %2d: %3d %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]);
-                  current_vthr2[i*16*32+j*32+k] += 2;
-                  count_noisy_channels+=1;
-                  break;
-                } 
                 // Look for rates above 100Hz
-                else if(readout_noise[i*16*32+j*32+k] > 100){
-                  lprintf("Noisy > 100Hz: %2d %2d %2d: %3d %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]);
+                if(readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME) > 100){
+                  lprintf("Noisy > 100Hz: %2d %2d %2d: %3d %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME));
                   current_vthr2[i*16*32+j*32+k] += 1;
-                  count_noisy_channels+=1;
+                  count_noisy_channels += 1;
                   break;
                 }
                 else{
@@ -629,7 +623,6 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
         }
       }
     }
-
   } // end if channel
 
   if (updateDB){
