@@ -597,7 +597,7 @@ void IsGTValidLonger(uint32_t crateMask, uint32_t *slotMasks, float time, uint16
             }
           }
           else{
-            if (num_read >= (2*NGTVALID)*0.75){
+            if (num_read >= (NGTVALID)*0.75){
               islonger[crateNum] |= (0x1<<slotNum);
             }
           }
