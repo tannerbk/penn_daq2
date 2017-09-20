@@ -584,14 +584,14 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                 }
 
                 // Look for rates above 100Hz
-                if(readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME) > 100){
-                  lprintf("Noisy > 100Hz: %2d %2d %2d: %3d %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME));
+                if(readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME*1e-6) > MAX_NOISE_RATE){
+                  lprintf("Noisy > %3dHz: %2d %2d %2d: %3d %.2f \n",MAX_NOISE_RATE,i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME*1e-6));
                   current_vthr2[i*16*32+j*32+k] += 1;
                   count_noisy_channels += 1;
                   break;
                 }
                 else{
-                  lprintf("Not Noisy: %2d %2d %2d: %3d %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]);
+                  lprintf("Not Noisy: %2d %2d %2d: Noise Freq: %.2f \n",i,j,k,readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME*1e-6));
                   break;
                 }
               } // end while true
