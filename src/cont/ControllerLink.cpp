@@ -1302,11 +1302,22 @@ void *ControllerLink::ProcessCommand(void *arg)
   }else if (strncmp(input,"trigger_scan",12) == 0){
     if (GetFlag(input,'h')){
       lprintf("Usage: trigger_scan -c [crate mask (hex)] "
-          "-t [trigger to enable (0-13)] -s [slot mask for all crates (hex)] "
+          "-t [trigger to enable (0-9)] -s [slot mask for all crates (hex)] "
           "-00..-18 [slot mask for crate 0-18 (hex)] -f [output file name] "
-          "-n [max nhit to scan to (int)] -m [min adc count thresh to scan down to (int)] "
+          "-n [max nhit to scan to (int)] -m [scan from 4095 to m value (int)] "
           "-d [threshold dac to program (by default the one you are triggering on)] "
-          "-q (quick mode - samples every 10th dac count)\n");
+          "-q (quick mode - first 50 DAC counts, then steps of 10)\n "
+          " Trigger mapping:\n "
+          " 0: N100L \n"
+          " 1: N100M \n"
+          " 2: N100H \n"
+          " 3: N20 \n"
+          " 4: N20LB \n"
+          " 5: ESUML \n"
+          " 6: ESUMH \n"
+          " 7: OWLN \n"
+          " 8: OWLEL \n"
+          " 9: OWLEH \n");
       goto err;
     }
     uint32_t crateMask = GetUInt(input,"c",0x4);
