@@ -35,24 +35,24 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
 
     // setup crate
     for (int crateNum=0;crateNum<20;crateNum++){
-    if ((0x1<<crateNum) & crateMask){
-    for (int i=0;i<16;i++){
-      if ((0x1<<i) & slotMasks[crateNum]){
-        uint32_t select_reg = FEC_SEL*i;
-        // disable pedestals
-        xl3s[crateNum]->RW(PED_ENABLE_R + select_reg + WRITE_REG,0x0,&result);
-        // reset fifo
-        xl3s[crateNum]->RW(CMOS_CHIP_DISABLE_R + select_reg + WRITE_REG,0xFFFFFFFF,&result);
-        xl3s[crateNum]->RW(GENERAL_CSR_R + select_reg + READ_REG,0x0,&result);
-        xl3s[crateNum]->RW(GENERAL_CSR_R + select_reg + WRITE_REG,
-            result | (crateNum << FEC_CSR_CRATE_OFFSET) | 0x6,&result);
-        xl3s[crateNum]->RW(GENERAL_CSR_R + select_reg + WRITE_REG,
-            (crateNum << FEC_CSR_CRATE_OFFSET),&result);
-        xl3s[crateNum]->RW(CMOS_CHIP_DISABLE_R + select_reg + WRITE_REG,0x0,&result);
+      if ((0x1<<crateNum) & crateMask){
+        for (int i=0;i<16;i++){
+          if ((0x1<<i) & slotMasks[crateNum]){
+            uint32_t select_reg = FEC_SEL*i;
+            // disable pedestals
+            xl3s[crateNum]->RW(PED_ENABLE_R + select_reg + WRITE_REG,0x0,&result);
+            // reset fifo
+            xl3s[crateNum]->RW(CMOS_CHIP_DISABLE_R + select_reg + WRITE_REG,0xFFFFFFFF,&result);
+            xl3s[crateNum]->RW(GENERAL_CSR_R + select_reg + READ_REG,0x0,&result);
+            xl3s[crateNum]->RW(GENERAL_CSR_R + select_reg + WRITE_REG,
+                result | (crateNum << FEC_CSR_CRATE_OFFSET) | 0x6,&result);
+            xl3s[crateNum]->RW(GENERAL_CSR_R + select_reg + WRITE_REG,
+                (crateNum << FEC_CSR_CRATE_OFFSET),&result);
+            xl3s[crateNum]->RW(CMOS_CHIP_DISABLE_R + select_reg + WRITE_REG,0x0,&result);
+          }
+        }
+        xl3s[crateNum]->DeselectFECs();
       }
-    }
-    xl3s[crateNum]->DeselectFECs();
-    }
     }
 
     if (mtc->SetupPedestals(0,DEFAULT_PED_WIDTH,10,0,crateMask,crateMask)){
@@ -61,11 +61,11 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
     }
 
     for (int crateNum=0;crateNum<20;crateNum++){
-    for (int i=0;i<16;i++){ 
-      for (int j=0;j<32;j++){
-        chan_errors[crateNum][i][j] = 0;
+      for (int i=0;i<16;i++){ 
+        for (int j=0;j<32;j++){
+          chan_errors[crateNum][i][j] = 0;
+        }
       }
-    }
     }
 
     for (int crateNum=0;crateNum<20;crateNum++){
@@ -83,12 +83,9 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
             num_dacs++;
           }
         }
-
         xl3s[crateNum]->MultiLoadsDac(num_dacs,dac_nums,dac_values,slot_nums);
       }
     }
-
-
 
     // We first need to find the max gtvalid per channel, and find the
     // ISETM settings per channel for max gtvalid 
@@ -96,22 +93,22 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
 
     // turn off twiddle bits
     for (int crateNum=0;crateNum<20;crateNum++){
-    if ((0x1<<crateNum) & crateMask){
-    num_dacs = 0;
-    for (int i=0;i<16;i++){
-      if ((0x1<<i) & slotMasks[crateNum]){
-        dac_nums[num_dacs] = d_iseta[0];
-        dac_values[num_dacs] = ISETA_NO_TWIDDLE;
-        slot_nums[num_dacs] = i;
-        num_dacs++;
-        dac_nums[num_dacs] = d_iseta[1];
-        dac_values[num_dacs] = ISETA_NO_TWIDDLE;
-        slot_nums[num_dacs] = i;
-        num_dacs++;
+      if ((0x1<<crateNum) & crateMask){
+        num_dacs = 0;
+        for (int i=0;i<16;i++){
+          if ((0x1<<i) & slotMasks[crateNum]){
+            dac_nums[num_dacs] = d_iseta[0];
+            dac_values[num_dacs] = ISETA_NO_TWIDDLE;
+            slot_nums[num_dacs] = i;
+            num_dacs++;
+            dac_nums[num_dacs] = d_iseta[1];
+            dac_values[num_dacs] = ISETA_NO_TWIDDLE;
+            slot_nums[num_dacs] = i;
+            num_dacs++;
+          }
+        }
+        xl3s[crateNum]->MultiLoadsDac(num_dacs,dac_nums,dac_values,slot_nums);
       }
-    }
-    xl3s[crateNum]->MultiLoadsDac(num_dacs,dac_nums,dac_values,slot_nums);
-    }
     }
 
     for (int crateNum=0;crateNum<20;crateNum++){
@@ -147,8 +144,9 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
                 xl3s[crateNum]->RW(PED_ENABLE_R + FEC_SEL*i + WRITE_REG,1<<j,&result);
               }
             }
-            for (int i=0;i<16;i++)
+            for (int i=0;i<16;i++){
               max_gtvalid[crateNum][i][j] = 0;
+            }
             // first try with the default ISETM
             num_dacs = 0;
             for (int i=0;i<16;i++){
@@ -199,38 +197,39 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
             for (int l=0;l<50;l++){
               uint32_t isetm_temp = l*5;
               for (int crateNum=0;crateNum<20;crateNum++){
-              if ((0x1<<crateNum) & crateNotDoneMask){
-              num_dacs = 0;
-              for (int i=0;i<16;i++){
-                if ((0x1<<i) & notDoneMask[crateNum]){
-                  dac_nums[num_dacs] = d_isetm[0];
-                  dac_values[num_dacs] = isetm_temp;
-                  slot_nums[num_dacs] = i;
-                  num_dacs++;
-                  dac_nums[num_dacs] = d_isetm[1];
-                  dac_values[num_dacs] = isetm_temp;
-                  slot_nums[num_dacs] = i;
-                  num_dacs++;
+                if ((0x1<<crateNum) & crateNotDoneMask){
+                  num_dacs = 0;
+                  for (int i=0;i<16;i++){
+                    if ((0x1<<i) & notDoneMask[crateNum]){
+                      dac_nums[num_dacs] = d_isetm[0];
+                      dac_values[num_dacs] = isetm_temp;
+                      slot_nums[num_dacs] = i;
+                      num_dacs++;
+                      dac_nums[num_dacs] = d_isetm[1];
+                      dac_values[num_dacs] = isetm_temp;
+                      slot_nums[num_dacs] = i;
+                      num_dacs++;
+                    }
+                  }
+                  error+= xl3s[crateNum]->MultiLoadsDac(num_dacs,dac_nums,dac_values,slot_nums);
                 }
-              }
-              error+= xl3s[crateNum]->MultiLoadsDac(num_dacs,dac_nums,dac_values,slot_nums);
-              }
               }
               IsGTValidLonger(crateMask,notDoneMask,max_time,islonger2);
               for (int crateNum=0;crateNum<20;crateNum++){
-              if ((0x1<<crateNum) & crateNotDoneMask){
-              for (int i=0;i<16;i++){
-                if ((0x1<<i) & notDoneMask[crateNum]){
-                  if ((0x1<<i) & islonger2[crateNum]){
-                    max_gtvalid[crateNum][i][j] = max_time;
-                    max_isetm[crateNum][i][j] = isetm_temp;
-                    notDoneMask[crateNum] &= ~(islonger2[crateNum]);
+                if ((0x1<<crateNum) & crateNotDoneMask){
+                  for (int i=0;i<16;i++){
+                    if ((0x1<<i) & notDoneMask[crateNum]){
+                      if ((0x1<<i) & islonger2[crateNum]){
+                        max_gtvalid[crateNum][i][j] = max_time;
+                        max_isetm[crateNum][i][j] = isetm_temp;
+                        notDoneMask[crateNum] &= ~(islonger2[crateNum]);
+                      }
+                    }
+                  }
+                  if (notDoneMask[crateNum] == 0x0){
+                    crateNotDoneMask &= ~(0x1<<crateNum);
                   }
                 }
-              }
-              if (notDoneMask[crateNum] == 0x0)
-                crateNotDoneMask &= ~(0x1<<crateNum);
-              }
               }
               if (crateNotDoneMask == 0x0)
                 break;
@@ -244,8 +243,9 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
             if ((0x1<<crateNum) & crateNotDoneMask){
               for (int i=0;i<16;i++){
                 if ((0x1<<i) & slotMasks[crateNum]){
-                  if (max_gtvalid[crateNum][i][j] == 0)
-                    chan_errors[crateNum][i][j] = 1; 
+                  if (max_gtvalid[crateNum][i][j] == 0){
+                    chan_errors[crateNum][i][j] = 1;
+                  }
                 }
               }
             }
@@ -255,20 +255,18 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
     } // end loop over channels
 
 
-
-
     // ok we now know what the max gtvalid is for each channel and what
     // isetm value will get us it
     // now we increment isetm until every channels gtvalid is shorter than
     // gtcutoff
     for (int wt=0;wt<2;wt++){
-      lprintf("Finding ISETM values for crates %05x, TAC %d\n",
-          crateMask,wt);
+      lprintf("Finding ISETM values for crates %05x, TAC %d\n",crateMask,wt);
       int ot = (wt+1)%2;
       for (int crateNum=0;crateNum<20;crateNum++){
         if ((0x1<<crateNum) & crateMask){
-          for (int i=0;i<16;i++)
+          for (int i=0;i<16;i++){
             isetm[wt][crateNum][i] = ISETM_MIN;
+          }
         }
       }
       for (int j=0;j<32;j++){
@@ -296,9 +294,9 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
         uint32_t crateNotDoneMask = crateMask;
         uint32_t notDoneMask[20];
         for (int crateNum=0;crateNum<20;crateNum++){
-        if ((0x1<<crateNum) & crateMask){
-          notDoneMask[crateNum] = slotMasks[crateNum];
-        }
+          if ((0x1<<crateNum) & crateMask){
+            notDoneMask[crateNum] = slotMasks[crateNum];
+          }
         }
         while (crateNotDoneMask){
           for (int crateNum=0;crateNum<20;crateNum++){
@@ -325,13 +323,15 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
                     isetm[wt][crateNum][i]++;
                     if (isetm[wt][crateNum][i] == 255)
                       notDoneMask[crateNum] &= ~(0x1<<i);
-                  }else{
+                  }
+                  else{
                     notDoneMask[crateNum] &= ~(0x1<<i);
                   }
                 }
               }
-              if (notDoneMask[crateNum] == 0x0)
+              if (notDoneMask[crateNum] == 0x0){
                 crateNotDoneMask &= ~(0x1<<crateNum);
+              }
             }
           }
         }
@@ -392,18 +392,19 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
                     printf("incremented again!\n");
                     if (isetm[wt][crateNum][i] == 255)
                       notDoneMask[crateNum] &= ~(0x1<<i);
-                  }else{
+                  }
+                  else{
                     notDoneMask[crateNum] &= ~(0x1<<i);
                   }
                 }
               }
-              if (notDoneMask[crateNum] == 0x0)
+              if (notDoneMask[crateNum] == 0x0){
                 crateNotDoneMask &= ~(0x1<<crateNum);
+              }
             }
           }
         }
       }
-
       printf("\n");
     } // end loop over tacs
 
@@ -415,42 +416,41 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
           if ((0x1<<i) & slotMasks[crateNum]){
             if (!setOnly){
               for (int wt=0;wt<2;wt++){
-                lprintf("\nMeasuring GTVALID for crate %d, slot %d, TAC %d\n",
-                    crateNum,i,wt);
-
+                lprintf("\nMeasuring GTVALID for crate %d, slot %d, TAC %d\n",crateNum,i,wt);
                 // loop over channel to measure inital GTVALID and find channel with max
                 for (int j=0;j<32;j++){
                   if ((0x1<<j) & channelMask){
                     error+= xl3s[crateNum]->LoadsDac(d_isetm[0],isetm[0][crateNum][i],i);
                     error+= xl3s[crateNum]->LoadsDac(d_isetm[1],isetm[1][crateNum][i],i);
                     xl3s[crateNum]->RW(PED_ENABLE_R + FEC_SEL*i + WRITE_REG,1<<j,&result);
-                    gtvalid_final[wt][j] = MeasureGTValid(crateNum,i,wt,max_gtvalid[crateNum][i][j],max_isetm[crateNum][i][j]);
+                    gtvalid_final[wt][j] = MeasureGTValid(crateNum,i,wt,max_gtvalid[crateNum][i][j],
+                                                          max_isetm[crateNum][i][j]);
                   } // end if chan mask
                 } // end loop over channels
                 // find maximum gtvalid time
                 gmax[wt] = 0.0;
                 cmax[wt] = 0;
-                for (int j=0;j<32;j++)
-                  if ((0x1<<j) & channelMask)
+                for (int j=0;j<32;j++){
+                  if ((0x1<<j) & channelMask){
                     if (gtvalid_final[wt][j] > gmax[wt]){
                       gmax[wt] = gtvalid_final[wt][j];
                       cmax[wt] = j;
                     }
-
+                  }
+                }
                 // find minimum gtvalid time
                 gmin[wt] = 9999.0;
                 cmin[wt] = 0;
-                for (int j=0;j<32;j++)
-                  if ((0x1<<j) & channelMask)
+                for (int j=0;j<32;j++){
+                  if ((0x1<<j) & channelMask){
                     if (gtvalid_final[wt][j] < gmin[wt]){
                       gmin[wt] = gtvalid_final[wt][j];
                       cmin[wt] = j;
                     }
-
-
+                  }
+                }
               } // end loop over tacs
             }
-
             // print out
             lprintf("\n--------------------------------------------------------\n");
             lprintf("Crate %d Slot %d - GTVALID FINAL results, time in ns:\n",crateNum,i);
@@ -476,7 +476,6 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
                     lprintf("\n");
                 }
               }
-
               lprintf(">>> Maximum TAC0 GTValid - Chan %02d: %4.1f\n",
                   cmax[0],gmax[0]);
               lprintf(">>> Minimum TAC0 GTValid - Chan %02d: %4.1f\n",

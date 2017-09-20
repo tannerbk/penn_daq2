@@ -410,9 +410,9 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
           for (int k=0;k<32;k++)
             current_vthr2[i*16*32+j*32+k] = current_vthr[i*16*32+j*32+k];
 
-    // we should now have every channel with no extra noise. Now lower each
-    // channel one by one, make sure it wasn't some other noisy channel making it
-    // look noisy.
+  // we should now have every channel with no extra noise. Now lower each
+  // channel one by one, make sure it wasn't some other noisy channel making it
+  // look noisy.
   if (channel){
     for (int i=0;i<MAX_XL3_CON;i++){
       if ((0x1<<i) & crateMask){
@@ -530,17 +530,16 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
 
     int count_noisy_channels;
     for (int i=0;i<MAX_XL3_CON;i++){
-     count_noisy_channels = 0; 
      if ((0x1<<i) & crateMask){
         int slotIter = 0;
         int slotIter2 = 0;
         for (int j=0;j<16;j++){
           if ((0x1<<j) & slotMasks[i]){
             for (int k=0;k<32;k++){
-
-              int steps = 0;
-              int done = 0;
-              while (true){
+              count_noisy_channels = 0;
+              while(true){
+                int steps = 0;
+                int done = 0;
 
                 slot_nums[k] = j;
                 dac_nums[k] = d_vthr[k];
@@ -572,46 +571,42 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
 
                 // now we wait
                 for (int t=0;t<2;t++)
-                  usleep(SLEEP_TIME/10);
+                  usleep(SLEEP_TIME);
 
                 if(j < 8){ 
                    xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF, total_count1);
                    readout_noise[i*16*32+j*32+k] = total_count1[slotIter][k] - readout_noise[i*16*32+j*32+k];
                 }
-                else{ 
+                else{
                    xl3s[i]->GetCmosTotalCount(slotMasks[i] & 0xFF00, total_count1);
                    readout_noise[i*16*32+j*32+k] = total_count1[slotIter2][k] - readout_noise[i*16*32+j*32+k];
                 }
 
-                if(readout_noise[i*16*32+j*32+k] > 10000){
-                  lprintf("Noisy > 10kHz: %2d %2d %2d: %3d %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]);
-                  current_vthr2[i*16*32+j*32+k] += 2;
-                  count_noisy_channels+=1;
-                  break;
-                } 
                 // Look for rates above 100Hz
-                else if(readout_noise[i*16*32+j*32+k] > 100){
-                  lprintf("Noisy > 100Hz: %2d %2d %2d: %3d %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]);
+                if(readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME*1e-6) > MAX_NOISE_RATE){
+                  lprintf("Noisy > %3dHz: %2d %2d %2d: %3d %.2f \n",MAX_NOISE_RATE,i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME*1e-6));
                   current_vthr2[i*16*32+j*32+k] += 1;
-                  count_noisy_channels+=1;
-                  break;
+                  count_noisy_channels += 1;
                 }
                 else{
-                  lprintf("Not Noisy: %2d %2d %2d: %3d %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]);
+                  lprintf("Not Noisy: %2d %2d %2d: Vthr: %3d Noise Freq: %.2f \n",i,j,k,current_vthr2[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME*1e-6));
                   break;
                 }
-              } // end while true
+                // Try 5 DAC counts maximum
+                if(count_noisy_channels >= 5){
+                  break;
+                }
+                // Don't step if channel is already very high
+                if(current_vthr2[i*16*32+j*32+k] >= 200){
+                  break;
+                }
+              }
             }
             if(j < 8)
               slotIter++;
             else
               slotIter2++;
           }
-        }
-        lprintf("Crate %d had %d noisy channels \n", i, count_noisy_channels);
-        // If too many noisy channels redo the crate
-        if(count_noisy_channels > 10){
-          i--;
         }
       } // end loop over crates in crate mask
     }
@@ -629,7 +624,6 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
         }
       }
     }
-
   } // end if channel
 
   if (updateDB){

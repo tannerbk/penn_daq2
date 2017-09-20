@@ -337,6 +337,43 @@ void *ControllerLink::ProcessCommand(void *arg)
     ChangeMode(crateNum,mode,dataAvailMask);
     UnlockConnections(0,0x1<<crateNum);
 
+
+
+  }else if (strncmp(input,"set_relays",strlen("set_relays")) == 0){
+    if (GetFlag(input,'h')){
+      lprintf("Usage: set_relays -c [crate num (int)] -m [mask (hex)]\n");
+      goto err;
+    }
+    int crateNum = GetInt(input,'c',2);
+    uint64_t mask = GetULongLong(input,"m",0x0);
+    int busy = LockConnections(0,0x1<<crateNum);
+    if (busy){
+      if (busy > 9)
+        lprintf("Trying to access a board that has not been connected\n");
+      else
+        lprintf("Those connections are currently in use.\n");
+      goto err;
+    }
+    SetRelays(crateNum, mask);
+    UnlockConnections(0,0x1<<crateNum);
+
+  }else if (strncmp(input,"get_relays",strlen("get_relays")) == 0){
+    if (GetFlag(input,'h')){
+      lprintf("Usage: get_relays -c [crate num (int)]\n");
+      goto err;
+    }
+    int crateNum = GetInt(input,'c',2);
+    int busy = LockConnections(0,0x1<<crateNum);
+    if (busy){
+      if (busy > 9)
+        lprintf("Trying to access a board that has not been connected\n");
+      else
+        lprintf("Those connections are currently in use.\n");
+      goto err;
+    }
+    GetRelays(crateNum);
+    UnlockConnections(0,0x1<<crateNum);
+
   }else if (strncmp(input,"check_xl3_status",16) == 0){
     int crateNum = GetInt(input,'c',2);
     int busy = LockConnections(0,0x1<<crateNum);
@@ -933,9 +970,9 @@ void *ControllerLink::ProcessCommand(void *arg)
     }
     int crateNum = GetInt(input,'c',2);
     uint32_t slotMask = GetUInt(input,"s",0xFFFF);
-    int upper = GetInt(input,'u',3550);
-    int lower = GetInt(input,'l',3000);
-    int num = GetInt(input,'n',550);
+    int upper = GetInt(input,'u',3500);
+    int lower = GetInt(input,'l',750);
+    int num = GetInt(input,'n',200);
     int samples = GetInt(input,'p',1);
     int update = GetFlag(input,'d');
     int busy = LockConnections(0,0x1<<crateNum);

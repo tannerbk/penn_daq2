@@ -290,6 +290,27 @@ uint32_t GetUInt(const char *input, const char *flag, uint32_t dflt, const uint3
   return dflt; 
 }
 
+uint64_t GetULongLong(const char *input, const char *flag, uint64_t dflt, const uint32_t flag_len)
+{
+  char buffer[10000];
+  memset(buffer,'\0',10000);
+  memcpy(buffer,input,strlen(input));
+  char *words,*words2;
+  words = strtok(buffer, " ");
+  while (words != NULL){
+    if (words[0] == '-'){
+        if(strncmp(&words[1], flag, flag_len) == 0){
+        if ((words2 = strtok(NULL, " ")) != NULL){
+          return strtoull(words2,(char**)NULL,16);
+        }
+      }
+    }
+    words = strtok(NULL, " ");
+  }
+
+  return dflt;
+}
+
 int GetFlag(const char *input, char flag)
 {
   char buffer[10000];
