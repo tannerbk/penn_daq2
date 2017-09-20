@@ -589,8 +589,18 @@ void IsGTValidLonger(uint32_t crateMask, uint32_t *slotMasks, float time, uint16
           xl3s[crateNum]->RW(FIFO_WRITE_PTR_R + FEC_SEL*slotNum + READ_REG,0x0,&result);
 
           int num_read = (result & 0x000FFFFF)/3;
-          if (num_read >= (NGTVALID)*0.75)
-            islonger[crateNum] |= (0x1<<slotNum);
+          // Hard-coded FECD slot deals with the fact that we pipe the GT into channel 23.
+          // If we stop doing that, this will break
+          if(crate == 17 && slot == 15){
+            if (num_read >= (2*NGTVALID)*0.75){
+              islonger[crateNum] |= (0x1<<slotNum);
+            }
+          }
+          else{
+            if (num_read >= (NGTVALID)*0.75){
+              islonger[crateNum] |= (0x1<<slotNum);
+            }
+          }
         }
       }
     }
