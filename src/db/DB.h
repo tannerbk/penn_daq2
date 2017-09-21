@@ -40,5 +40,7 @@ int RemoveFromConfig(JsonNode *config_doc, char ids[][5], int boardcount);
 int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID);
 void AppendString(JsonNode* array, char* buffer);
 
+int UpdateTriggerStatus(int type, int crate, int slot, int channel);
+
 #endif
 

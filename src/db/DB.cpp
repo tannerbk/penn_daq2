@@ -12,7 +12,6 @@
 #include "Json.h"
 #include "DB.h"
 
-
 int count_tests[ntests];
 
 int GetNewID(char* newid)
@@ -1169,4 +1168,79 @@ void AppendString(JsonNode* array, char* buffer){
   sprintf(returnstring + strlen(returnstring), "}'");
 
   strcpy(buffer, returnstring);
+}
+
+int UpdateTriggerStatus(int type, int crate, int slot, int channel){
+
+  char updateN100[8] = "True";
+  char updateN20[8] = "True";
+
+  if(type == 1){
+    strcpy(updateN20, "False");
+  }
+  else if(type == 2){
+    strcpy(updateN100, "False");
+  }
+  else if(type !=0){
+    lprintf("Error getting missing trigger type.\n");
+    return 0;
+  } 
+
+  char connect[64];
+  sprintf(connect, "host=%s dbname=%s user=%s connect_timeout=15",DETECTOR_DB_HOST, DETECTOR_DB_NAME, DETECTOR_DB_USERNAME); 
+
+  PGconn *detectorDB = PQconnectdb(connect);
+
+  if(PQstatus(detectorDB) == CONNECTION_BAD){
+    char* error = PQerrorMessage(detectorDB);
+    lprintf("ProduceRunTableProc: Connection to database failed. Error %s \n", error);
+    return 1;
+  }
+
+  char query[2048];
+  sprintf(query, "INSERT INTO channel_status "
+   "(crate,slot,channel,pmt_removed,pmt_reinstalled,low_occupancy,zero_occupancy, "
+   "screamer,bad_discriminator,no_n100,no_n20,no_esum,cable_pulled,bad_cable, "
+   "resistor_pulled,disable_n100,disable_n20,bad_base_current,high_dropout,bad_data) "
+   "SELECT "
+   "crate,slot,channel,pmt_removed,pmt_reinstalled,low_occupancy,zero_occupancy, "
+   "screamer,bad_discriminator,no_n100,no_n20,no_esum,cable_pulled,bad_cable, "
+   "resistor_pulled,disable_n100,disable_n20,bad_base_current,high_dropout,bad_data "
+   "FROM channel_status "
+   "WHERE crate=%d AND slot=%d AND channel=%d "
+   "ORDER by timestamp DESC limit 1",
+   crate, slot, channel);
+
+  PGresult *qResult = PQexec(detectorDB, query);
+
+  if(PQresultStatus(qResult) != PGRES_COMMAND_OK){
+    char* error = PQresStatus(PQresultStatus(qResult));
+    lprintf("Query to DetectorDB failed %s.\n", error);
+    PQclear(qResult);
+    PQfinish(detectorDB);
+    return 1;
+  }
+
+  PQclear(qResult);
+
+  sprintf(query, "UPDATE channel_status "
+    "SET no_n100=%s, no_n20=%s WHERE crate = %d and slot = %d AND "
+    "channel = %d AND timestamp = (SELECT max(timestamp) FROM channel_status "
+    "WHERE crate=%d and slot = %d and channel = %d)", updateN100, updateN20, 
+    crate, slot, channel, crate, slot, channel);
+
+  qResult = PQexec(detectorDB, query);
+
+  if(PQresultStatus(qResult) != PGRES_COMMAND_OK){
+    char* error = PQresStatus(PQresultStatus(qResult));
+    lprintf("Query to DetectorDB failed %s.\n", error);
+    PQclear(qResult);
+    PQfinish(detectorDB);
+    return 1;
+  }
+
+  lprintf("Succesfully updated detector DB with missing triggers: N100 = %s and N20 = %s.\n",updateN100, updateN20);
+  PQclear(qResult);
+  PQfinish(detectorDB);
+  return 0;
 }

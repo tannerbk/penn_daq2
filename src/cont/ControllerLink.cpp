@@ -1227,7 +1227,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       lprintf("Usage: see_refl -c [crate num (int)] "
           "-v [dac value (int)] -s [slot mask (hex)] "
           "-f [frequency (float)] -p [channel mask (hex)] "
-          "-d (update database)\n");
+          "-d (update database) -z (update detector database) \n");
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
@@ -1236,6 +1236,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     int dacValue = GetInt(input,'v',255);
     float frequency = GetFloat(input,'f',10);
     int update = GetFlag(input,'d');
+    int detectorupdate = GetFlag(input,'z');
     int busy = LockConnections(1,0x1<<crateNum);
     if (busy){
       if (busy > 9)
@@ -1244,7 +1245,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    SeeReflection(crateNum,slotMask,channelMask,dacValue,frequency,update);
+    SeeReflection(crateNum,slotMask,channelMask,dacValue,frequency,update, detectorupdate);
     UnlockConnections(1,0x1<<crateNum);
 
   }else if (strncmp(input,"esum_see_refl",13) == 0){

@@ -11,7 +11,10 @@
 #include "XL3Cmds.h"
 #include "SeeReflection.h"
 
-int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dacValue, float frequency, int updateDB, int finalTest)
+#define RED "\x1b[31m"
+#define RESET "\x1b[0m"
+
+int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dacValue, float frequency, int updateDB, int updateDetectorDB, int finalTest)
 {
   lprintf("*** Starting See Reflection ************\n");
   lprintf("Warning, triggers will be enables for specified slots (one at a time)\n");
@@ -38,6 +41,13 @@ int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dac
         if( finalTest == 0)
           CrateInit(crateNum, slotMask,0,0,0,0,0,0,0,0,1);
 
+        if(updateDetectorDB){
+          lprintf(RED "Updating detectordb, 0 = Missing n100 and Missing n20, 1 = Missing N100, 2 = Missing N20.\n" RESET);
+        }
+        else{
+          lprintf(RED "0 = Missing n100 and Missing n20, 1 = Missing N100, 2 = Missing N20, or just type in a custom message and hit enter.\n" RESET);
+        }
+
         // loop over channels
         for (int j=0;j<32;j++){
           if ((0x1<<j) & channelMask){
@@ -60,13 +70,30 @@ int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dac
             // set up charge injection for this channel
             xl3s[crateNum]->SetupChargeInjection((0x1<<i),temp_pattern,dacValue);
             // wait until something is typed
-            lprintf("Slot %d, channel %d. If good, hit enter. Otherwise type in a description of the problem (or just \"fail\") and hit enter.\n",i,j);
+            lprintf("Enabled triggers for: %d/%d/%d \n",crateNum,i,j);
 
             contConnection->GetInput(channel_results[j],100);
 
-            for (int k=0;k<strlen(channel_results[j]);k++)
-              if (channel_results[j][k] == '\n')
+            for (int k=0;k<strlen(channel_results[j]);k++){
+              if (channel_results[j][k] == '\n'){
                 channel_results[j][k] = '\0';
+              }
+              else if(strncmp(channel_results[j],"0",1) == 0){
+                strcpy(channel_results[j],"Missing N20 and N100.\n");
+                if(updateDetectorDB)
+                  UpdateTriggerStatus(0, crateNum, i, j);
+              }
+              else if(strncmp(channel_results[j],"1",1) == 0){
+                strcpy(channel_results[j],"Missing N100.\n");
+                if(updateDetectorDB)
+                  UpdateTriggerStatus(1, crateNum, i, j);
+              }
+              else if(strncmp(channel_results[j],"2",1) == 0){
+                strcpy(channel_results[j],"Missing N20.\n");
+                if(updateDetectorDB)
+                  UpdateTriggerStatus(2, crateNum, i, j);
+              }
+            }
 
             if (strncmp(channel_results[j],"quit",4) == 0){
               lprintf("Quitting.\n");
@@ -74,8 +101,6 @@ int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dac
               xl3s[crateNum]->DeselectFECs();
               return 0;
             }
-
-
           } // end pattern mask
         } // end loop over channels
 
