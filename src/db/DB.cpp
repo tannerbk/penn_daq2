@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <libpq-fe.h>
 
 #include "XL3PacketTypes.h"
 #include "DBTypes.h"
@@ -10,6 +11,7 @@
 #include "Pouch.h"
 #include "Json.h"
 #include "DB.h"
+
 
 int count_tests[ntests];
 
@@ -810,11 +812,19 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             for(int ttype=0; ttype<ntests; ttype++){
               if(strcmp(testtype, test_map[ttype])==0){
                 int timestamp = (int)json_get_number(json_find_member(test_doc,"timestamp"));
-                if ((json_get_number(json_find_member(config,"crate_id")) == i) && (json_get_number(json_find_member(config,"slot")) == j)){
+                int crate = json_get_number(json_find_member(config,"crate_id"));
+                int slot = json_get_number(json_find_member(config,"slot"));
+                if (crate == i && slot == j){
                   if(time[ttype] == 0 || timestamp > time[ttype]){
                     time[ttype] = timestamp;
-                    printf("test type %s \n", test_map[ttype], timestamp); 
+                    printf("test type %s \n", test_map[ttype]);
                     AddECALTestResults(doc,test_doc);
+                    if(!strcmp(test_map[ttype],"zdisc")){
+                      int error = LoadZDiscToDetectorDB(test_doc, crate, slot, id);
+                      if(error){
+                        lprintf("Warning Failure pushing zdisc info to detector DB for crate %d slot %d", crate, slot);
+                      }
+                    }
                   }
                 }
               }
@@ -1087,4 +1097,76 @@ int RemoveFromConfig(JsonNode *config_doc, char ids[][5], int boardcount)
     }
   }
   return 0;
+}
+
+int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID){ 
+
+  char connect[64];
+  sprintf(connect, "host=%s dbname=%s user=%s connect_timeout=15",DETECTOR_DB_HOST, DETECTOR_DB_NAME, DETECTOR_DB_USERNAME); 
+
+  PGconn *detectorDB = PQconnectdb(connect);
+
+  if(PQstatus(detectorDB) == CONNECTION_BAD){
+    char* error = PQerrorMessage(detectorDB);
+    lprintf("ProduceRunTableProc: Connection to database failed. Error %s \n", error);
+    return 1;
+  }
+
+  char str_zero[512], str_upper[512], str_lower[512], str_max[512];
+
+  JsonNode *zeros = json_find_member(doc,"zero_dac");
+  JsonNode *upper = json_find_member(doc,"upper_dac");
+  JsonNode *lower = json_find_member(doc,"lower_dac");
+  JsonNode *max   = json_find_member(doc,"max_dac");
+
+  AppendString(zeros, str_zero); 
+  AppendString(upper, str_upper); 
+  AppendString(lower, str_lower); 
+  AppendString(max, str_max); 
+
+  char ecalid[64] = "";
+  sprintf(ecalid, "'%s'", ecalID);
+
+  char query[2048];
+  sprintf(query, "INSERT INTO zdisc "
+                 "(crate, slot, zero_disc, upper_disc, lower_disc, max_disc, ecalid) "
+                 "VALUES (%d, %d, %s, %s, %s, %s, %s) ", 
+                  crate, slot, str_zero, str_upper, str_lower, str_max, ecalid);
+
+  PGresult *qResult = PQexec(detectorDB, query);
+
+  if(PQresultStatus(qResult) != PGRES_COMMAND_OK){
+    char* error = PQresStatus(PQresultStatus(qResult));
+    lprintf("Query to DetectorDB failed %s.\n", error);
+    PQclear(qResult);
+    PQfinish(detectorDB);
+    return 1;
+  }
+
+  lprintf("Successful pushed zdisc info to detector state database. \n");
+
+  PQclear(qResult);
+  PQfinish(detectorDB);
+  return 0;
+}
+
+// Function to turn int[32] to string in order to push to detector DB
+void AppendString(JsonNode* array, char* buffer){
+
+  int data[32];
+  char returnstring[512] = "'{"; 
+
+  for(int i= 0; i < 32; i++){
+    data[i] = json_get_number(json_find_element(array,i));
+    if(i != 31){
+      sprintf(returnstring + strlen(returnstring), "%d, ", data[i]);
+    }
+    else{
+      sprintf(returnstring + strlen(returnstring), "%d", data[i]);
+    }
+  }
+
+  sprintf(returnstring + strlen(returnstring), "}'");
+
+  strcpy(buffer, returnstring);
 }

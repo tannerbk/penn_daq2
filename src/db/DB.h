@@ -37,6 +37,8 @@ int PostECALDoc(uint32_t crateMask, uint32_t *slotMasks, char *logfile, char *id
 int UpdateLocation(uint16_t *ids, int *crates, int *slots, int *positions, int boardcount);
 int RemoveFromConfig(JsonNode *config_doc, char ids[][5], int boardcount);
 
+int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID);
+void AppendString(JsonNode* array, char* buffer);
 
 #endif
 
