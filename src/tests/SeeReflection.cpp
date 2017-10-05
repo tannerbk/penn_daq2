@@ -4,7 +4,10 @@
 #include "Globals.h"
 #include "Json.h"
 
+#include <libpq-fe.h>
+
 #include "DB.h"
+#include "DetectorDB.h"
 #include "ControllerLink.h"
 #include "XL3Model.h"
 #include "MTCModel.h"
@@ -20,6 +23,7 @@ int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dac
   lprintf("Warning, triggers will be enables for specified slots (one at a time)\n");
 
   char channel_results[32][100];
+  PGconn* detectorDB;
 
   try {
 
@@ -43,6 +47,7 @@ int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dac
 
         if(updateDetectorDB){
           lprintf(RED "Updating detectordb, 0 = Missing n100 and Missing n20, 1 = Missing N100, 2 = Missing N20.\n" RESET);
+          detectorDB = ConnectToDetectorDB();
         }
         else{
           lprintf(RED "0 = Missing n100 and Missing n20, 1 = Missing N100, 2 = Missing N20, or just type in a custom message and hit enter.\n" RESET);
@@ -81,17 +86,17 @@ int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dac
               else if(strncmp(channel_results[j],"0",1) == 0){
                 strcpy(channel_results[j],"Missing N20 and N100.\n");
                 if(updateDetectorDB)
-                  UpdateTriggerStatus(0, crateNum, i, j);
+                  UpdateTriggerStatus(0, crateNum, i, j, detectorDB);
               }
               else if(strncmp(channel_results[j],"1",1) == 0){
                 strcpy(channel_results[j],"Missing N100.\n");
                 if(updateDetectorDB)
-                  UpdateTriggerStatus(1, crateNum, i, j);
+                  UpdateTriggerStatus(1, crateNum, i, j, detectorDB);
               }
               else if(strncmp(channel_results[j],"2",1) == 0){
                 strcpy(channel_results[j],"Missing N20.\n");
                 if(updateDetectorDB)
-                  UpdateTriggerStatus(2, crateNum, i, j);
+                  UpdateTriggerStatus(2, crateNum, i, j, detectorDB);
               }
             }
 
@@ -152,6 +157,9 @@ int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dac
   catch(const char* s){
     lprintf("SeeReflection: %s\n",s);
   }
+
+  if(updateDetectorDB)
+    CloseDetectorDBConnection(detectorDB);
 
   lprintf("****************************************\n");
   return 0;

@@ -1245,7 +1245,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    SeeReflection(crateNum,slotMask,channelMask,dacValue,frequency,update, detectorupdate);
+    SeeReflection(crateNum,slotMask,channelMask,dacValue,frequency,update,detectorupdate);
     UnlockConnections(1,0x1<<crateNum);
 
   }else if (strncmp(input,"esum_see_refl",13) == 0){
@@ -1426,7 +1426,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     if (GetFlag(input,'h')){
       lprintf("Usage: zdisc -c [crate num (int)] "
           "-s [slot mask (hex)] -o [offset] -r [rate] "
-          "-d (update database)\n");
+          "-d (update database) -z (update couch and detector database)\n");
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
@@ -1434,6 +1434,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     int offset = GetInt(input,'o',0);
     float rate = GetFloat(input,'r',10000);
     int update = GetFlag(input,'d');
+    int detectorupdate = GetFlag(input,'z');
     int busy = LockConnections(0,0x1<<crateNum);
     if (busy){
       if (busy > 9)
@@ -1442,7 +1443,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    ZDisc(crateNum,slotMask,rate,offset,update);
+    ZDisc(crateNum,slotMask,rate,offset,update,detectorupdate);
     UnlockConnections(0,0x1<<crateNum);
 
   }else if (strncmp(input,"run_pedestals_end",17) == 0){

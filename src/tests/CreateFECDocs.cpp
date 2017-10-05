@@ -1,12 +1,18 @@
 #include "Globals.h"
 #include "DB.h"
+#include "DetectorDB.h"
 #include "Json.h"
 #include "Pouch.h"
+
+#include <libpq-fe.h>
 
 #include "ControllerLink.h"
 #include "CreateFECDocs.h"
 
 int CreateFECDocs(uint32_t crateMask, uint32_t *slotMasks, const char* ecalID){
+
+  // Open connection to detector db
+  PGconn* detectorDB = ConnectToDetectorDB();
 
   if(crateMask == 0x0 && *slotMasks == 0x0){
     // get the ecal document with the configuration
@@ -47,15 +53,17 @@ int CreateFECDocs(uint32_t crateMask, uint32_t *slotMasks, const char* ecalID){
       if ((0x1<<i) & crateMask)
         lprintf("Generate FEC doc for: crate %d: 0x%04x\n",i,slotMasks[i]);
 
-    GenerateFECDocFromECAL(crateMask, slotMasks, ecalID);
+    GenerateFECDocFromECAL(crateMask, slotMasks, ecalID, detectorDB);
   }
   else if((crateMask != 0x0 && *slotMasks == 0x0) ||
           (crateMask == 0x0 && *slotMasks != 0x0)){
     lprintf("Specify both a crate and slot mask if you wish to load FEC docs for a specific crate/slot, rather than all slots in the ECAL.\n");
   }
   else{
-    GenerateFECDocFromECAL(crateMask, slotMasks, ecalID);
+    GenerateFECDocFromECAL(crateMask, slotMasks, ecalID, detectorDB);
   }
+
+  CloseDetectorDBConnection(detectorDB);
 
   return 0;
 }

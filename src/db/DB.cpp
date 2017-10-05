@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <libpq-fe.h>
 
 #include "XL3PacketTypes.h"
 #include "DBTypes.h"
@@ -10,6 +9,7 @@
 
 #include "Pouch.h"
 #include "Json.h"
+#include "DetectorDB.h"
 #include "DB.h"
 
 int count_tests[ntests];
@@ -747,7 +747,7 @@ int PostECALDoc(uint32_t crateMask, uint32_t *slotMasks, char *logfile, char *id
   return 0;
 }
 
-int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* id)
+int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* id, PGconn* detectorDB)
 {
   lprintf("*** Generating FEC documents from ECAL ***\n");
 
@@ -814,12 +814,14 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
                 int crate = json_get_number(json_find_member(config,"crate_id"));
                 int slot = json_get_number(json_find_member(config,"slot"));
                 if (crate == i && slot == j){
+                  // You can run the test multiple times for each ECAL, this makes sure you
+                  // grab the most recent version of the test
                   if(time[ttype] == 0 || timestamp > time[ttype]){
                     time[ttype] = timestamp;
                     printf("test type %s \n", test_map[ttype]);
                     AddECALTestResults(doc,test_doc);
                     if(!strcmp(test_map[ttype],"zdisc")){
-                      int error = LoadZDiscToDetectorDB(test_doc, crate, slot, id);
+                      int error = LoadZDiscToDetectorDB(test_doc, crate, slot, id, detectorDB);
                       if(error){
                         lprintf("Warning Failure pushing zdisc info to detector DB for crate %d slot %d", crate, slot);
                       }
@@ -838,6 +840,10 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             }
           }
           if(didalltestsrun==0){
+            int error = LoadFECDocToDetectorDB(doc, i, j, id, detectorDB);
+            if(error){
+              lprintf("Warning Failure pushing fecdc info to detector DB for crate %d slot %d", i, j);
+            }
             PostFECDBDoc(i,j,doc);
           }
           else{
@@ -975,7 +981,7 @@ int UpdateLocation(uint16_t *ids, int *crates, int *slots, int *positions, int b
           db_ids[j] = json_find_element(dbs,j);
         for (int j=0;j<4;j++)
           json_remove_from_parent(db_ids[j]);
-        for (int j=0;j<4;j++){
+       for (int j=0;j<4;j++){
           if (j==(positions[m]-1)){
             if (json_get_string(db_ids[j]) != NULL){
               sprintf(oldidstrings[oldboards],"%s",json_get_string(db_ids[j]));
@@ -1098,149 +1104,3 @@ int RemoveFromConfig(JsonNode *config_doc, char ids[][5], int boardcount)
   return 0;
 }
 
-int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID){ 
-
-  char connect[64];
-  sprintf(connect, "host=%s dbname=%s user=%s connect_timeout=15",DETECTOR_DB_HOST, DETECTOR_DB_NAME, DETECTOR_DB_USERNAME); 
-
-  PGconn *detectorDB = PQconnectdb(connect);
-
-  if(PQstatus(detectorDB) == CONNECTION_BAD){
-    char* error = PQerrorMessage(detectorDB);
-    lprintf("ProduceRunTableProc: Connection to database failed. Error %s \n", error);
-    return 1;
-  }
-
-  char str_zero[512], str_upper[512], str_lower[512], str_max[512];
-
-  JsonNode *zeros = json_find_member(doc,"zero_dac");
-  JsonNode *upper = json_find_member(doc,"upper_dac");
-  JsonNode *lower = json_find_member(doc,"lower_dac");
-  JsonNode *max   = json_find_member(doc,"max_dac");
-
-  AppendString(zeros, str_zero); 
-  AppendString(upper, str_upper); 
-  AppendString(lower, str_lower); 
-  AppendString(max, str_max); 
-
-  char ecalid[64] = "";
-  sprintf(ecalid, "'%s'", ecalID);
-
-  char query[2048];
-  sprintf(query, "INSERT INTO zdisc "
-                 "(crate, slot, zero_disc, upper_disc, lower_disc, max_disc, ecalid) "
-                 "VALUES (%d, %d, %s, %s, %s, %s, %s) ", 
-                  crate, slot, str_zero, str_upper, str_lower, str_max, ecalid);
-
-  PGresult *qResult = PQexec(detectorDB, query);
-
-  if(PQresultStatus(qResult) != PGRES_COMMAND_OK){
-    char* error = PQresStatus(PQresultStatus(qResult));
-    lprintf("Query to DetectorDB failed %s.\n", error);
-    PQclear(qResult);
-    PQfinish(detectorDB);
-    return 1;
-  }
-
-  lprintf("Successful pushed zdisc info to detector state database. \n");
-
-  PQclear(qResult);
-  PQfinish(detectorDB);
-  return 0;
-}
-
-// Function to turn int[32] to string in order to push to detector DB
-void AppendString(JsonNode* array, char* buffer){
-
-  int data[32];
-  char returnstring[512] = "'{"; 
-
-  for(int i= 0; i < 32; i++){
-    data[i] = json_get_number(json_find_element(array,i));
-    if(i != 31){
-      sprintf(returnstring + strlen(returnstring), "%d, ", data[i]);
-    }
-    else{
-      sprintf(returnstring + strlen(returnstring), "%d", data[i]);
-    }
-  }
-
-  sprintf(returnstring + strlen(returnstring), "}'");
-
-  strcpy(buffer, returnstring);
-}
-
-int UpdateTriggerStatus(int type, int crate, int slot, int channel){
-
-  char updateN100[8] = "True";
-  char updateN20[8] = "True";
-
-  if(type == 1){
-    strcpy(updateN20, "False");
-  }
-  else if(type == 2){
-    strcpy(updateN100, "False");
-  }
-  else if(type !=0){
-    lprintf("Error getting missing trigger type.\n");
-    return 0;
-  } 
-
-  char connect[64];
-  sprintf(connect, "host=%s dbname=%s user=%s connect_timeout=15",DETECTOR_DB_HOST, DETECTOR_DB_NAME, DETECTOR_DB_USERNAME); 
-
-  PGconn *detectorDB = PQconnectdb(connect);
-
-  if(PQstatus(detectorDB) == CONNECTION_BAD){
-    char* error = PQerrorMessage(detectorDB);
-    lprintf("ProduceRunTableProc: Connection to database failed. Error %s \n", error);
-    return 1;
-  }
-
-  char query[2048];
-  sprintf(query, "INSERT INTO channel_status "
-   "(crate,slot,channel,pmt_removed,pmt_reinstalled,low_occupancy,zero_occupancy, "
-   "screamer,bad_discriminator,no_n100,no_n20,no_esum,cable_pulled,bad_cable, "
-   "resistor_pulled,disable_n100,disable_n20,bad_base_current,high_dropout,bad_data) "
-   "SELECT "
-   "crate,slot,channel,pmt_removed,pmt_reinstalled,low_occupancy,zero_occupancy, "
-   "screamer,bad_discriminator,no_n100,no_n20,no_esum,cable_pulled,bad_cable, "
-   "resistor_pulled,disable_n100,disable_n20,bad_base_current,high_dropout,bad_data "
-   "FROM channel_status "
-   "WHERE crate=%d AND slot=%d AND channel=%d "
-   "ORDER by timestamp DESC limit 1",
-   crate, slot, channel);
-
-  PGresult *qResult = PQexec(detectorDB, query);
-
-  if(PQresultStatus(qResult) != PGRES_COMMAND_OK){
-    char* error = PQresStatus(PQresultStatus(qResult));
-    lprintf("Query to DetectorDB failed %s.\n", error);
-    PQclear(qResult);
-    PQfinish(detectorDB);
-    return 1;
-  }
-
-  PQclear(qResult);
-
-  sprintf(query, "UPDATE channel_status "
-    "SET no_n100=%s, no_n20=%s WHERE crate = %d and slot = %d AND "
-    "channel = %d AND timestamp = (SELECT max(timestamp) FROM channel_status "
-    "WHERE crate=%d and slot = %d and channel = %d)", updateN100, updateN20, 
-    crate, slot, channel, crate, slot, channel);
-
-  qResult = PQexec(detectorDB, query);
-
-  if(PQresultStatus(qResult) != PGRES_COMMAND_OK){
-    char* error = PQresStatus(PQresultStatus(qResult));
-    lprintf("Query to DetectorDB failed %s.\n", error);
-    PQclear(qResult);
-    PQfinish(detectorDB);
-    return 1;
-  }
-
-  lprintf("Succesfully updated detector DB with missing triggers: N100 = %s and N20 = %s.\n",updateN100, updateN20);
-  PQclear(qResult);
-  PQfinish(detectorDB);
-  return 0;
-}
