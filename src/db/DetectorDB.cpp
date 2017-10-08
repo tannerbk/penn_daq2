@@ -58,7 +58,6 @@ void AppendStringIntArray(int* array, char* buffer, int size){
   }
 
   sprintf(returnstring + strlen(returnstring), "}'");
-
   strcpy(buffer, returnstring);
 }
 
@@ -79,7 +78,6 @@ void AppendStringArray(JsonNode* array, char* buffer, int size){
   }
 
   sprintf(returnstring + strlen(returnstring), "}'");
-
   strcpy(buffer, returnstring);
 }
 
@@ -113,7 +111,6 @@ int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID
   }
 
   lprintf("Successful pushed zdisc info to detector state database. \n");
-
   return 0;
 }
 
@@ -169,8 +166,8 @@ int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalI
 
   // VBAL
   JsonNode* vbal = json_find_member(hw, "vbal");
-  JsonNode* vbal_0 = json_find_member(vbal, "vbal_low");
-  JsonNode* vbal_1 = json_find_member(vbal, "vbal_high");
+  JsonNode* vbal_0 = json_find_element(vbal, 0);
+  JsonNode* vbal_1 = json_find_element(vbal, 1);
   AppendStringArray(vbal_0, str_vbal_0, 32);
   AppendStringArray(vbal_1, str_vbal_1, 32);
 
@@ -196,9 +193,9 @@ int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalI
   char query[buffer];
   int size = snprintf(query, buffer, "INSERT INTO fecdoc "
                   "(ecalid, crate, slot, mbid, dbid, vthr, vint, hvref, scmos, "
-                  "tcmos_vmax, tcmos_tacref, tcmos_isetm, tcmos_iseta, tcmos_tacshift "
+                  "tcmos_vmax, tcmos_tacref, tcmos_isetm, tcmos_iseta, tcmos_tacshift, "
                   "tdisc_rmp, tdisc_rmpup, tdisc_vsi, tdisc_vli, vbal_0, vbal_1, "
-                  "tr100_delay, tr20_delay, tr20_width)"
+                  "tr100_delay, tr20_delay, tr20_width) "
                   "VALUES (%s, %d, %d, %d, %s, %s, %d, %d,"
                           "%s, %d, %d, %s, %s, %s,"
                           "%s, %s, %s, %s, %s, %s,"
