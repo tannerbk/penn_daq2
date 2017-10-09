@@ -31,7 +31,8 @@ void CloseDetectorDBConnection(PGconn* detectorDB){
 
 int CheckResultStatus(PGresult* qResult, PGconn* detectorDB){
 
-  if(PQresultStatus(qResult) != PGRES_COMMAND_OK){
+  if(PQresultStatus(qResult) != PGRES_COMMAND_OK &&
+     PQresultStatus(qResult) != PGRES_TUPLES_OK){
     char* error = PQresStatus(PQresultStatus(qResult));
     lprintf("Query to DetectorDB failed %s.\n", error);
     PQclear(qResult);
@@ -39,7 +40,6 @@ int CheckResultStatus(PGresult* qResult, PGconn* detectorDB){
     return 1;
   }
 
-  PQclear(qResult);
   return 0;
 }
 
@@ -110,6 +110,7 @@ int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID
     return 1;
   }
 
+  PQclear(qResult);
   lprintf("Successful pushed zdisc info to detector state database. \n");
   return 0;
 }
@@ -216,6 +217,7 @@ int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalI
     return 1;
   }
 
+  PQclear(qResult);
   lprintf("Successful pushed fecdoc info to detector state database. \n");
 
   return 0;
@@ -255,6 +257,7 @@ int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* dete
   if(CheckResultStatus(qResult, detectorDB)){
     return 1;
   }
+  PQclear(qResult);
 
   sprintf(query, "UPDATE channel_status "
     "SET no_n100=%s, no_n20=%s WHERE crate = %d and slot = %d AND "
@@ -266,8 +269,51 @@ int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* dete
   if(CheckResultStatus(qResult, detectorDB)){
     return 1;
   }
+  PQclear(qResult);
 
   lprintf("Succesfully updated detector DB with missing triggers: N100 = %s and N20 = %s.\n",updateN100, updateN20);
+  return 0;
+}
+
+int DetectorSlotMask(uint32_t crateMask, uint32_t *slotMasks, PGconn* detectorDB){
+
+  uint32_t newSlotMasks[MAX_XL3_CON] = {0};
+  PGresult *qResult;
+
+  char query[2048];
+  sprintf(query, "SELECT last_value FROM run_number");
+  qResult = PQexec(detectorDB, query);
+  if(CheckResultStatus(qResult, detectorDB)){
+    return 1;
+  }
+  char* run_str;
+  run_str = PQgetvalue(qResult, 0, 0);
+  int run = strtoul(run_str, NULL, 0);
+  PQclear(qResult);
+
+  lprintf("Using run %d to find missing slots.\n", run);
+
+  sprintf(query, "SELECT crate, slot FROM detector_state "
+                  "WHERE run = %d ORDER BY crate, slot", run);
+  qResult = PQexec(detectorDB, query);
+  if(CheckResultStatus(qResult, detectorDB)){
+    return 1;
+  }
+  for(int i = 0; i < PQntuples(qResult); i++){
+    char* crate_str = PQgetvalue(qResult, i, 0); 
+    char* slot_str = PQgetvalue(qResult, i, 1); 
+    int crateNum = strtoul(crate_str, NULL, 0);
+    int slotNum = strtoul(slot_str, NULL, 0);
+    newSlotMasks[crateNum] |= (1 << slotNum);
+  }
+
+  for(int i = 0; i < MAX_XL3_CON; i++){
+    if((0x1<<i) & crateMask){
+      slotMasks[i] &= newSlotMasks[i];
+    }
+  }
+  PQclear(qResult);
+
   return 0;
 }
 

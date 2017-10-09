@@ -21,5 +21,9 @@ void AppendStringIntArray(int* array, char* buffer, int size);
 // This is used in SeeRefl Test
 int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* detectorDB);
 
+// Used to get slot mask according to detectordb
+int DetectorSlotMask(uint32_t crateMask, uint32_t *slotMask, PGconn* detectorDB);
+
+
 #endif
 

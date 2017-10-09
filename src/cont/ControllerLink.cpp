@@ -1550,7 +1550,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       lprintf("0: fec_test, 1: board_id, 2: cgt_test, 3: crate_cbal\n");
       lprintf("4: ped_run, 5: set_ttot, 6: get_ttot, 7: disc_check\n");
       lprintf("8: gtvalid_test, 9: zdisc, 10: find_noise\n");
-      lprintf("-q [quick flag: use to only run essential ECAL tests (expert only) \n");
+      lprintf("-q (quick flag): run only essential ECAL tests \n");
+      lprintf("-z use detectordb to set crate/slot mask \n"); 
       lprintf("If you want to do different slot masks for the different crates in the ECAL:\n");
       lprintf("-crate_num [one slot mask (hex)] e.g -0 7fff -1 000f -13 ffef\n");
       goto err;
@@ -1565,6 +1566,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     }
     uint32_t testMask = GetUInt(input,"t",0xFFFFFFFF);
     int quickFlag = GetFlag(input,'q');
+    int detectorFlag = GetFlag(input,'z');
     char loadECAL[500];
     memset(loadECAL,'\0',sizeof(loadECAL));
     GetString(input,loadECAL,'l',"");
@@ -1576,7 +1578,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    ECAL(crateMask,slotMasks,testMask,quickFlag,loadECAL);
+    ECAL(crateMask,slotMasks,testMask,quickFlag,loadECAL,detectorFlag);
     UnlockConnections(1,crateMask);
 
   }else if (strncmp(input,"create_fec_docs",14) == 0){
