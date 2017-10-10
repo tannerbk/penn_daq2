@@ -3,7 +3,7 @@
 
 #include <libpq-fe.h>
 
-#include "JSon.h"
+#include "Json.h"
 
 PGconn* ConnectToDetectorDB();
 void CloseDetectorDBConnection(PGconn* detectorDB);
