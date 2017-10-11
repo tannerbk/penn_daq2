@@ -813,19 +813,31 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
                 int timestamp = (int)json_get_number(json_find_member(test_doc,"timestamp"));
                 int crate = json_get_number(json_find_member(config,"crate_id"));
                 int slot = json_get_number(json_find_member(config,"slot"));
-                if (crate == i && slot == j){
+                if(crate == i && slot == j){
                   // You can run the test multiple times for each ECAL, this makes sure you
                   // grab the most recent version of the test
                   if(time[ttype] == 0 || timestamp > time[ttype]){
                     time[ttype] = timestamp;
+                  }
+                }
+              }
+            }
+          }
+
+          for (int k=0;k<total_rows;k++){
+            JsonNode *ecalone_row = json_find_element(ecal_rows,k);
+            JsonNode *test_doc = json_find_member(ecalone_row,"value");
+            JsonNode *config = json_find_member(test_doc,"config");
+            char *testtype = json_get_string(json_find_member(test_doc,"type"));
+            for(int ttype=0; ttype<ntests; ttype++){
+              if(strcmp(testtype, test_map[ttype])==0){
+                int timestamp = (int)json_get_number(json_find_member(test_doc,"timestamp"));
+                int crate = json_get_number(json_find_member(config,"crate_id"));
+                int slot = json_get_number(json_find_member(config,"slot"));
+                if(crate == i && slot == j){
+                  if(timestamp == time[ttype]){
                     printf("test type %s \n", test_map[ttype]);
                     AddECALTestResults(doc,test_doc);
-                    if(!strcmp(test_map[ttype],"zdisc")){
-                      int error = LoadZDiscToDetectorDB(test_doc, crate, slot, id, detectorDB);
-                      if(error){
-                        lprintf("Warning Failure pushing zdisc info to detector DB for crate %d slot %d", crate, slot);
-                      }
-                    }
                   }
                 }
               }
@@ -840,11 +852,13 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             }
           }
           if(didalltestsrun==0){
-            int error = LoadFECDocToDetectorDB(doc, i, j, id, detectorDB);
-            if(error){
-              lprintf("Warning Failure pushing fecdc info to detector DB for crate %d slot %d", i, j);
+            //PostFECDBDoc(i,j,doc);
+            if(LoadFECDocToDetectorDB(doc, i, j, id, detectorDB)){
+              lprintf("Warning Failure pushing fecdc info to detector DB for crate %d slot %d. \n", i, j);
             }
-            PostFECDBDoc(i,j,doc);
+            if(LoadZDiscToDetectorDB(doc, i, j, id, detectorDB)){
+              lprintf("Warning Failure pushing zdisc info to detector DB for crate %d slot %d. \n", i, j);
+            }
           }
           else{
               // While uploading, print any failures

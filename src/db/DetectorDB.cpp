@@ -83,26 +83,20 @@ void AppendStringArray(JsonNode* array, char* buffer, int size){
 
 int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB){
 
-  char str_zero[512], str_upper[512], str_lower[512], str_max[512];
+  char str_vthr_zero[512];
 
-  JsonNode *zeros = json_find_member(doc,"zero_dac");
-  JsonNode *upper = json_find_member(doc,"upper_dac");
-  JsonNode *lower = json_find_member(doc,"lower_dac");
-  JsonNode *max   = json_find_member(doc,"max_dac");
-
-  AppendStringArray(zeros, str_zero, 32);
-  AppendStringArray(upper, str_upper, 32);
-  AppendStringArray(lower, str_lower, 32);
-  AppendStringArray(max, str_max, 32);
+  JsonNode *hw = json_find_member(doc, "hw");
+  JsonNode *vthr_zero = json_find_member(hw, "vthr_zero");
+  AppendStringArray(vthr_zero, str_vthr_zero, 32);
 
   char ecalid[64] = "";
   sprintf(ecalid, "'%s'", ecalID);
 
   char query[2048];
   sprintf(query, "INSERT INTO zdisc "
-                 "(crate, slot, zero_disc, upper_disc, lower_disc, max_disc, ecalid) "
-                 "VALUES (%d, %d, %s, %s, %s, %s, %s) ",
-                  crate, slot, str_zero, str_upper, str_lower, str_max, ecalid);
+                 "(crate, slot, zero_disc, ecalid) "
+                 "VALUES (%d, %d, %s, %s) ",
+                  crate, slot, str_vthr_zero, ecalid);
 
   PGresult *qResult = PQexec(detectorDB, query);
 
