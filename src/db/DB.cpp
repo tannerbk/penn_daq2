@@ -852,7 +852,7 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             }
           }
           if(didalltestsrun==0){
-            //PostFECDBDoc(i,j,doc);
+            PostFECDBDoc(i,j,doc);
             if(LoadFECDocToDetectorDB(doc, i, j, id, detectorDB)){
               lprintf("Warning Failure pushing fecdc info to detector DB for crate %d slot %d. \n", i, j);
             }
