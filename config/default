@@ -13,6 +13,13 @@ FECDB_PASSWORD=
 FECDB_BASE_NAME=debugdb
 FECDB_VIEWDOC=_design/penn_daq_views/_view
 
+# detctor database
+DETECTOR_DB_NAME=test
+DETECTOR_DB_HOST=minard
+DETECTOR_DB_PORT=
+DETECTOR_DB_USERNAME=snotdaq
+DETECTOR_DB_PASSWORD=
+
 # net
 MAX_PENDING_CONS=20
 
@@ -28,10 +35,10 @@ SBC_SERVER=10.0.0.30
 ORCA_READOUT_PATH=/etc/rc.d/orcareadout
 MTC_XILINX_LOCATION=data/mtcxilinx.rbt
 DEFAULT_SSHKEY=ssh_key
+
 # tubii
 TUBII_PORT=4001
 TUBII_SERVER=localhost
-#
 
 # controller
 CONT_PORT=44600

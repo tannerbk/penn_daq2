@@ -2,11 +2,14 @@
 #include "Globals.h"
 #include "Json.h"
 
+#include <libpq-fe.h>
+
 #include "DB.h"
+#include "DetectorDB.h"
 #include "XL3Model.h"
 #include "ZDisc.h"
 
-int ZDisc(int crateNum, uint32_t slotMask, float rate, int offset, int updateDB, int finalTest, int ecal)
+int ZDisc(int crateNum, uint32_t slotMask, float rate, int offset, int updateDB, int updateDetectorDB, int finalTest, int ecal)
 {
   lprintf("*** Starting Zero Discriminator ********\n");
 
@@ -50,7 +53,7 @@ int ZDisc(int crateNum, uint32_t slotMask, float rate, int offset, int updateDB,
         }
 
         // update the database
-        if (updateDB){
+        if (updateDB || updateDetectorDB){
           lprintf("updating the database\n");
           JsonNode *newdoc = json_mkobject();
           json_append_member(newdoc,"type",json_mkstring("zdisc"));
@@ -93,7 +96,14 @@ int ZDisc(int crateNum, uint32_t slotMask, float rate, int offset, int updateDB,
             json_append_member(newdoc,"final_test_id",json_mkstring(finalTestIDs[crateNum][i]));	
           if (ecal)
             json_append_member(newdoc,"ecal_id",json_mkstring(ecalID));	
-
+          if(updateDetectorDB && !ecal){ 
+            PGconn* detectorDB = ConnectToDetectorDB(); 
+            int error = LoadZDiscToDetectorDB(newdoc, crateNum, i, "", detectorDB);
+            if(error){
+              lprintf("Warning Failure pushing zdisc info to detector DB for crate %d slot %d", crateNum, i);
+            }
+            CloseDetectorDBConnection(detectorDB);
+          }
           PostDebugDoc(crateNum,i,newdoc);
           json_delete(newdoc); // Only need to delete the head node);
         }

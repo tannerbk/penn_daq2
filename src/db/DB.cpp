@@ -9,6 +9,7 @@
 
 #include "Pouch.h"
 #include "Json.h"
+#include "DetectorDB.h"
 #include "DB.h"
 
 int count_tests[ntests];
@@ -746,7 +747,7 @@ int PostECALDoc(uint32_t crateMask, uint32_t *slotMasks, char *logfile, char *id
   return 0;
 }
 
-int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* id)
+int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* id, PGconn* detectorDB)
 {
   lprintf("*** Generating FEC documents from ECAL ***\n");
 
@@ -810,10 +811,32 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             for(int ttype=0; ttype<ntests; ttype++){
               if(strcmp(testtype, test_map[ttype])==0){
                 int timestamp = (int)json_get_number(json_find_member(test_doc,"timestamp"));
-                if ((json_get_number(json_find_member(config,"crate_id")) == i) && (json_get_number(json_find_member(config,"slot")) == j)){
+                int crate = json_get_number(json_find_member(config,"crate_id"));
+                int slot = json_get_number(json_find_member(config,"slot"));
+                if(crate == i && slot == j){
+                  // You can run the test multiple times for each ECAL, this makes sure you
+                  // grab the most recent version of the test
                   if(time[ttype] == 0 || timestamp > time[ttype]){
                     time[ttype] = timestamp;
-                    printf("test type %s \n", test_map[ttype], timestamp); 
+                  }
+                }
+              }
+            }
+          }
+
+          for (int k=0;k<total_rows;k++){
+            JsonNode *ecalone_row = json_find_element(ecal_rows,k);
+            JsonNode *test_doc = json_find_member(ecalone_row,"value");
+            JsonNode *config = json_find_member(test_doc,"config");
+            char *testtype = json_get_string(json_find_member(test_doc,"type"));
+            for(int ttype=0; ttype<ntests; ttype++){
+              if(strcmp(testtype, test_map[ttype])==0){
+                int timestamp = (int)json_get_number(json_find_member(test_doc,"timestamp"));
+                int crate = json_get_number(json_find_member(config,"crate_id"));
+                int slot = json_get_number(json_find_member(config,"slot"));
+                if(crate == i && slot == j){
+                  if(timestamp == time[ttype]){
+                    printf("test type %s \n", test_map[ttype]);
                     AddECALTestResults(doc,test_doc);
                   }
                 }
@@ -830,6 +853,12 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
           }
           if(didalltestsrun==0){
             PostFECDBDoc(i,j,doc);
+            if(LoadFECDocToDetectorDB(doc, i, j, id, detectorDB)){
+              lprintf("Warning Failure pushing fecdc info to detector DB for crate %d slot %d. \n", i, j);
+            }
+            if(LoadZDiscToDetectorDB(doc, i, j, id, detectorDB)){
+              lprintf("Warning Failure pushing zdisc info to detector DB for crate %d slot %d. \n", i, j);
+            }
           }
           else{
               // While uploading, print any failures
@@ -966,7 +995,7 @@ int UpdateLocation(uint16_t *ids, int *crates, int *slots, int *positions, int b
           db_ids[j] = json_find_element(dbs,j);
         for (int j=0;j<4;j++)
           json_remove_from_parent(db_ids[j]);
-        for (int j=0;j<4;j++){
+       for (int j=0;j<4;j++){
           if (j==(positions[m]-1)){
             if (json_get_string(db_ids[j]) != NULL){
               sprintf(oldidstrings[oldboards],"%s",json_get_string(db_ids[j]));
@@ -1088,3 +1117,4 @@ int RemoveFromConfig(JsonNode *config_doc, char ids[][5], int boardcount)
   }
   return 0;
 }
+

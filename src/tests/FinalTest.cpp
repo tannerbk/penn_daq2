@@ -215,7 +215,7 @@ int FinalTest(int crateNum, uint32_t slotMask, uint32_t testMask, int skip)
   CrateInit(crateNum,slotMask,1,0,0,0,0,0,0,0);
   
   if ((0x1<<testCounter) & testMask)
-    ZDisc(crateNum,slotMask,10000,0,updateDB,1);
+    ZDisc(crateNum,slotMask,10000,0,updateDB,0,1,0);
   testCounter++;
 
   MTCInit(0);
@@ -252,9 +252,9 @@ int FinalTest(int crateNum, uint32_t slotMask, uint32_t testMask, int skip)
     contConnection->GetInput(comments);
     if (strncmp("init",comments,4) == 0){
       CrateInit(crateNum,slotMask,1,0,0,0,0,0,0,0,1); 
-      SeeReflection(crateNum,slotMask,0xFFFFFFFF,255,1000,updateDB,1);
+      SeeReflection(crateNum,slotMask,0xFFFFFFFF,255,1000,updateDB,0,1);
     }else if (strncmp("quit",comments,4) != 0){
-      SeeReflection(crateNum,slotMask,0xFFFFFFFF,255,1000,updateDB,1);
+      SeeReflection(crateNum,slotMask,0xFFFFFFFF,255,1000,updateDB,0,1);
     }
   }
 

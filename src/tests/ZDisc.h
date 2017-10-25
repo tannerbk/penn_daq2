@@ -3,7 +3,7 @@
 
 #include <unistd.h>
 
-int ZDisc(int crateNum, uint32_t slotMask, float rate, int offset, int updateDB, int finalTest=0, int ecal=0);
+int ZDisc(int crateNum, uint32_t slotMask, float rate, int offset, int updateDB, int updateDetectorDB, int finalTest=0, int ecal=0);
 
 #endif
 

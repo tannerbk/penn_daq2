@@ -31,6 +31,11 @@ char FECDB_USERNAME[100];
 char FECDB_PASSWORD[100];
 char FECDB_BASE_NAME[100];
 char FECDB_VIEWDOC[100];
+char DETECTOR_DB_NAME[100];
+char DETECTOR_DB_HOST[100];
+char DETECTOR_DB_PORT[100];
+char DETECTOR_DB_USERNAME[100];
+char DETECTOR_DB_PASSWORD[100];
 int MAX_PENDING_CONS;
 int XL3_PORT;
 int SBC_PORT;
@@ -205,6 +210,16 @@ int readConfigurationFile()
           strcpy(FECDB_BASE_NAME,var_value);
         }else if (strcmp(var_name,"FECDB_VIEWDOC")==0){
           strcpy(FECDB_VIEWDOC,var_value);
+        }else if (strcmp(var_name,"DETECTOR_DB_NAME")==0){
+          strcpy(DETECTOR_DB_NAME,var_value);
+        }else if (strcmp(var_name,"DETECTOR_DB_HOST")==0){
+          strcpy(DETECTOR_DB_HOST,var_value);
+        }else if (strcmp(var_name,"DETECTOR_DB_PORT")==0){
+          strcpy(DETECTOR_DB_PORT,var_value);
+        }else if (strcmp(var_name,"DETECTOR_DB_USERNAME")==0){
+          strcpy(DETECTOR_DB_USERNAME,var_value);
+        }else if (strcmp(var_name,"DETECTOR_DB_PASSWORD")==0){
+          strcpy(DETECTOR_DB_PASSWORD,var_value);
         }else if (strcmp(var_name,"MAX_PENDING_CONS")==0){
           MAX_PENDING_CONS = atoi(var_value);
         }else if (strcmp(var_name,"XL3_PORT")==0){

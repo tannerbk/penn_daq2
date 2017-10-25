@@ -5,7 +5,7 @@
 
 #define MAX_ERRORS 50
 
-int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dacValue, float frequency, int updateDB, int finalTest=0);
+int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dacValue, float frequency, int updateDB, int updateDetectorDB, int finalTest=0);
 
 #endif
 

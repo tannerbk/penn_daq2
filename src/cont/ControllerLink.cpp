@@ -1227,7 +1227,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       lprintf("Usage: see_refl -c [crate num (int)] "
           "-v [dac value (int)] -s [slot mask (hex)] "
           "-f [frequency (float)] -p [channel mask (hex)] "
-          "-d (update database)\n");
+          "-d (update database) -z (update detector database) \n");
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
@@ -1236,6 +1236,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     int dacValue = GetInt(input,'v',255);
     float frequency = GetFloat(input,'f',10);
     int update = GetFlag(input,'d');
+    int detectorupdate = GetFlag(input,'z');
     int busy = LockConnections(1,0x1<<crateNum);
     if (busy){
       if (busy > 9)
@@ -1244,7 +1245,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    SeeReflection(crateNum,slotMask,channelMask,dacValue,frequency,update);
+    SeeReflection(crateNum,slotMask,channelMask,dacValue,frequency,update,detectorupdate);
     UnlockConnections(1,0x1<<crateNum);
 
   }else if (strncmp(input,"esum_see_refl",13) == 0){
@@ -1425,7 +1426,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     if (GetFlag(input,'h')){
       lprintf("Usage: zdisc -c [crate num (int)] "
           "-s [slot mask (hex)] -o [offset] -r [rate] "
-          "-d (update database)\n");
+          "-d (update database) -z (update couch and detector database)\n");
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
@@ -1433,6 +1434,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     int offset = GetInt(input,'o',0);
     float rate = GetFloat(input,'r',10000);
     int update = GetFlag(input,'d');
+    int detectorupdate = GetFlag(input,'z');
     int busy = LockConnections(0,0x1<<crateNum);
     if (busy){
       if (busy > 9)
@@ -1441,7 +1443,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    ZDisc(crateNum,slotMask,rate,offset,update);
+    ZDisc(crateNum,slotMask,rate,offset,update,detectorupdate);
     UnlockConnections(0,0x1<<crateNum);
 
   }else if (strncmp(input,"run_pedestals_end",17) == 0){
@@ -1548,7 +1550,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       lprintf("0: fec_test, 1: board_id, 2: cgt_test, 3: crate_cbal\n");
       lprintf("4: ped_run, 5: set_ttot, 6: get_ttot, 7: disc_check\n");
       lprintf("8: gtvalid_test, 9: zdisc, 10: find_noise\n");
-      lprintf("-q [quick flag: use to only run essential ECAL tests (expert only) \n");
+      lprintf("-q (quick flag): run only essential ECAL tests \n");
+      lprintf("-z use detectordb to set crate/slot mask \n"); 
       lprintf("If you want to do different slot masks for the different crates in the ECAL:\n");
       lprintf("-crate_num [one slot mask (hex)] e.g -0 7fff -1 000f -13 ffef\n");
       goto err;
@@ -1563,6 +1566,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     }
     uint32_t testMask = GetUInt(input,"t",0xFFFFFFFF);
     int quickFlag = GetFlag(input,'q');
+    int detectorFlag = GetFlag(input,'z');
     char loadECAL[500];
     memset(loadECAL,'\0',sizeof(loadECAL));
     GetString(input,loadECAL,'l',"");
@@ -1574,7 +1578,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    ECAL(crateMask,slotMasks,testMask,quickFlag,loadECAL);
+    ECAL(crateMask,slotMasks,testMask,quickFlag,loadECAL,detectorFlag);
     UnlockConnections(1,crateMask);
 
   }else if (strncmp(input,"create_fec_docs",14) == 0){

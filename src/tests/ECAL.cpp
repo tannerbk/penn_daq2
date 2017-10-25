@@ -2,6 +2,9 @@
 #include "Pouch.h"
 #include "Json.h"
 #include "DB.h"
+#include "DetectorDB.h"
+
+#include <libpq-fe.h>
 
 #include "BoardID.h"
 #include "FECTest.h"
@@ -21,7 +24,7 @@
 #include "MTCCmds.h"
 #include "ECAL.h"
 
-int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFlag, const char* loadECAL)
+int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFlag, const char* loadECAL, int detectorFlag)
 {
   time_t curtime = time(NULL);
   struct timeval moretime;
@@ -35,7 +38,6 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
   if (ecalLogFile == NULL)
     lprintf("Problem enabling logging for ecal, could not open log file!\n");
 
-
   lprintf("*** Starting ECAL *****************************\n");
   lprintf("*** Make sure the ECAL cable is plugged in ****\n");
 
@@ -45,6 +47,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
   lprintf("\nYou have selected the following configuration:\n\n");
 
   memset(ecalID,'\0',sizeof(ecalID));
+  // load an old ECAL
   if (strlen(loadECAL)){
     // get the ecal document with the configuration
     char get_db_address[500];
@@ -60,7 +63,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     }
     JsonNode *ecalconfig_doc = json_decode(ecaldoc_response->resp.data);
  
-    // get the configuration of the loaded ECAL is crate/slot mask not specified
+    // get the configuration of the loaded ECAL if crate/slot mask not specified
     if(crateMask == 0x0 && *slotMasks == 0x0){
       for (int i=0;i<MAX_XL3_CON;i++){
         slotMasks[i] = 0x0;
@@ -90,42 +93,70 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     pr_free(ecaldoc_response);
     json_delete(ecalconfig_doc);
 
-    for (int i=0;i<MAX_XL3_CON;i++)
-      if ((0x1<<i) & crateMask)
-        lprintf("crate %d: 0x%04x\n",i,slotMasks[i]);
-
     lprintf("You will be updating ECAL %s\n",loadECAL);
     strcpy(ecalID,loadECAL);
-  }else{
-    for (int i=0;i<MAX_XL3_CON;i++)
-      if ((0x1<<i) & crateMask)
-        lprintf("crate %d: 0x%04x\n",i,slotMasks[i]);
-
+  }
+  // Create a new ECAL
+  else{
     GetNewID(ecalID);
     lprintf("Creating new ECAL %s\n",ecalID);
   }
+
+  
+  // Print the current location and if UG allow the
+  // slot mask to be set by detector DB
+  if(CURRENT_LOCATION == ABOVE_GROUND_TESTSTAND){
+    lprintf("Running ECAL from surface teststand.\n");
+  }
+  else if(CURRENT_LOCATION == UNDERGROUND){
+    lprintf("Running ECAL from underground.\n");
+    if(detectorFlag){
+      PGconn* detectorDB = ConnectToDetectorDB();
+      lprintf("Using detectorDB to set slot masks.\n");
+      if(DetectorSlotMask(crateMask, slotMasks, detectorDB)){
+        lprintf("Failure setting slot mask using detectorDB, exiting.");
+        return -1;
+      }
+    }
+  }
+  else if(CURRENT_LOCATION == PENN_TESTSTAND){
+    lprintf("Running ECAL from penn teststand.\n");
+  }
+
+  // Get the testmask from -t and -q flags
+  lprintf("Running the following tests: \n");
   if ((testMask == 0xFFFFFFFF || (testMask & 0x3FF) == 0x3FF) && (!quickFlag)){
-    lprintf("Doing all tests\n");
+    lprintf("All \n");
     testMask = 0xFFFFFFFF;
   }
   else if ((testMask != 0x0)){
-    if (quickFlag)
+    if (quickFlag){
       testMask &= 0x728;
-    lprintf("Doing ");
-    for (int i=0;i<11;i++)
-      if ((0x1<<i) & testMask)
-        lprintf("%s ",testList[i]);
-    lprintf("\n");
+    }
+    for (int i=0;i<11;i++){
+      if ((0x1<<i) & testMask){
+        lprintf("%s \n",testList[i]);
+      }
+    }
   }
   else if (!quickFlag){
-    lprintf("Not adding any tests\n");
+    lprintf("None.\n");
   }
-  else if(quickFlag){ // Do only ECAL tests that set hardware settings
+  // Do only ECAL tests that set hardware settings
+  else if(quickFlag){
     testMask = 0x728; 
-    lprintf("Doing only essential ECAL tests: ");
-    for (int i=0;i<11;i++)
-      if ((0x1<<i) & testMask)
+    for (int i=0;i<11;i++){
+      if ((0x1<<i) & testMask){
         lprintf("%s ",testList[i]);
+      }
+    }
+  }
+
+  // Print the crate and slot masks
+  for (int i=0;i<MAX_XL3_CON;i++){
+    if ((0x1<<i) & crateMask){
+      lprintf("crate %d: 0x%04x\n",i,slotMasks[i]);
+    }
   }
 
   lprintf("------------------------------------------\n");
@@ -255,7 +286,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     if ((0x1<<testCounter) & testMask)
       for (int i=0;i<MAX_XL3_CON;i++)
         if ((0x1<<i) & crateMask)
-          ZDisc(i,slotMasks[i],10000,0,1,0,1);
+          ZDisc(i,slotMasks[i],10000,0,1,0,0,1);
     testCounter++;
 
     if ((0x1<<testCounter) & testMask)

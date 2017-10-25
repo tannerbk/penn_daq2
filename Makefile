@@ -4,7 +4,7 @@ CDIR = src
 BDIR = bin
 CC = g++
 CFLAGS = $(patsubst %,-I%,$(CDIRS)) -I/Users/snotdaq/penn_daq2/libevent/include
-LIBS = -L/Users/snotdaq/penn_daq2/libevent/lib -levent -lcurl -levent_pthreads -lpthread
+LIBS = -L/Users/snotdaq/penn_daq2/libevent/lib -levent -lcurl -levent_pthreads -lpthread -lpq
 
 _CDIRS = db core cont net xl3 mtc tests tubii
 CDIRS = $(patsubst %,$(CDIR)/%,$(_CDIRS))
@@ -12,7 +12,7 @@ CDIRS = $(patsubst %,$(CDIR)/%,$(_CDIRS))
 vpath %.h $(CDIRS)
 vpath %.cpp $(CDIRS)
 
-_OBJ = Main.o NetUtils.o XL3Link.o GenericLink.o ControllerLink.o XL3Cmds.o Globals.o XL3Model.o DB.o Json.o Pouch.o MTCLink.o MTCCmds.o MTCModel.o FECTest.o MemTest.o BoardID.o CaldTest.o CGTTest.o ChinjScan.o CrateCBal.o DiscCheck.o FifoTest.o GTValidTest.o MbStabilityTest.o PedRun.o SeeReflection.o SeeReflectionEsum.o ScanReflections.o TriggerScan.o TTot.o VMon.o ZDisc.o RunPedestals.o FinalTest.o ECAL.o CreateFECDocs.o FindNoise.o DACSweep.o LocalVMon.o TUBIIModel.o TUBIILink.o TUBIICmds.o
+_OBJ = Main.o NetUtils.o XL3Link.o GenericLink.o ControllerLink.o XL3Cmds.o Globals.o XL3Model.o DB.o DetectorDB.o Json.o Pouch.o MTCLink.o MTCCmds.o MTCModel.o FECTest.o MemTest.o BoardID.o CaldTest.o CGTTest.o ChinjScan.o CrateCBal.o DiscCheck.o FifoTest.o GTValidTest.o MbStabilityTest.o PedRun.o SeeReflection.o SeeReflectionEsum.o ScanReflections.o TriggerScan.o TTot.o VMon.o ZDisc.o RunPedestals.o FinalTest.o ECAL.o CreateFECDocs.o FindNoise.o DACSweep.o LocalVMon.o TUBIIModel.o TUBIILink.o TUBIICmds.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 _DEPS = $(_OBJ:.o=.h) DBTypes.h XL3PacketTypes.h MTCPacketTypes.h  XL3Registers.h UnpackBundles.h DacNumber.h MTCRegisters.h
