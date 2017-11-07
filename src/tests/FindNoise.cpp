@@ -12,7 +12,7 @@
 #include "FindNoise.h"
 
 
-int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useDebug, int channel, int updateDB, int ecal)
+int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useDebug, int channelTuning, int plusOne, int updateDB, int ecal)
 {
   lprintf("*** Starting Noise Run *****************\n");
   lprintf("All crates and mtcs should have been inited with proper values already\n");
@@ -208,12 +208,17 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
 
   int done = 0;
   int iterations = 0;
+  int printiter = 0;
 
   // loop until all channels done
   while (done == 0){
     // load new thresholds
     for (int i=0;i<MAX_XL3_CON;i++){
       if ((0x1<<i) & crateMask){
+        if(printiter == 0){
+          printiter++;
+          printf("Finding discriminator thresholds for crate %d.\n", i);
+        }
         for (int j=0;j<16;j++){
           if ((0x1<<j) & slotMasks[i]){
             int numDacs = 0;
@@ -304,7 +309,6 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
     // done getting number of counts second time
 
     // now we check each channel and see how we should adjust each threshold
-    printf("-----------------\n");
     for (int i=0;i<MAX_XL3_CON;i++){
       if ((0x1<<i) & crateMask){
         for (int j=0;j<16;j++){
@@ -316,7 +320,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                 doneornot = 1;
               if (error_channel[i][j] & 0x1<<k)
                 errorornot = 1;
-              printf("%2d %2d %2d (%1d, %1d): %3d, %7u (%.0f) ",i,j,k,doneornot,errorornot,current_vthr[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k],frequency*(2*SLEEP_TIME/1e6+0.025)+1);
+              //printf("%2d %2d %2d (%1d, %1d): %3d, %7u (%.0f) ",i,j,k,doneornot,errorornot,current_vthr[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k],frequency*(2*SLEEP_TIME/1e6+0.025)+1);
               if (!((0x1<<k) & error_channel[i][j])){
                 if (!((0x1<<k) & done_channel[i][j])){
                   // check if there were more hits than what we put in (plus 1 second extra fudge factor for now)
@@ -330,11 +334,11 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                       error_channel[i][j] |= 0x1<<k;
                     }
                     // check if we've been above the noise yet
-                    if (found_above[i][j] & ((0x1<<k)))
-                      printf("++ ready\n");
-                    else
+                    //if (found_above[i][j] & ((0x1<<k)))
+                      //printf("++ ready\n");
+                    //else
                       // we are still in mid noise, so bump it up, but dont call it done
-                      printf("++\n");
+                      //printf("++\n");
                   }else{
                     // mark that we've been above the noise
                     found_above[i][j] |= 0x1<<k;
@@ -342,7 +346,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                     // count above it and can call it done
                     if (found_below[i][j] & ((0x1<<k))){
                       done_channel[i][j] |= 0x1<<k;
-                      printf("done\n");
+                      //printf("done\n");
                     }else{
                       // still not low enough, go down one
                       current_vthr[i*16*32+j*32+k]--;
@@ -350,7 +354,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                         current_vthr[i*16*32+j*32+k] = 0;
                         error_channel[i][j] |= 0x1<<k;
                       }
-                      printf("--\n");
+                      //printf("--\n");
                     }
                   }
                 }else{
@@ -368,17 +372,17 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                     found_above[i][j] &= ~(0x1<<k);
                     if (iterations < MAX_ITERATIONS){
                       found_below[i][j] &= ~(0x1<<k);
-                      printf("++ undone\n");
-                    }else{
-                      printf("++ undone (no--)\n");
-                    }
-                  }else{
-                    printf("\n");
-                  }
+                      //printf("++ undone\n");
+                    }//else{
+                    //  printf("++ undone (no--)\n");
+                    //}
+                  }//else{
+                  //  printf("\n");
+                  //}
                 }
-              }else{
-                printf("\n");
-              }
+              }//else{
+              //  printf("\n");
+              //}
             }
           }
         }
@@ -398,11 +402,14 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
       }
     }
 
-
     iterations++;
   } // end while(done == 0)
 
-  // set vthr2 equal to vthr for debugging
+  // set vthr2 equal to vthr, this will allow us to compare the thresholds
+  // set by each method at the end. The first method has the disadvantage that
+  // it is sensitive to a couple noisy channels making everything bad. The second
+  // method has the disadvantage that it sets the discriminator thresholds too low
+  // and a manual +1 to all DAC counts is added to account for this
   for (int i=0;i<MAX_XL3_CON;i++)
     if ((0x1<<i) & crateMask)
       for (int j=0;j<16;j++)
@@ -413,9 +420,10 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
   // we should now have every channel with no extra noise. Now lower each
   // channel one by one, make sure it wasn't some other noisy channel making it
   // look noisy.
-  if (channel){
+  if (channelTuning){
     for (int i=0;i<MAX_XL3_CON;i++){
       if ((0x1<<i) & crateMask){
+        printf("Adjusting discriminator thresholds for crate %d.\n", i);
         int slotIter = 0;
         int slotIter2 = 0;
         for (int j=0;j<16;j++){
@@ -467,14 +475,14 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                    readout_noise[i*16*32+j*32+k] = total_count1[slotIter2][k] - readout_noise[i*16*32+j*32+k];
                 }
 
-                printf("%2d %2d %2d: %3d, %7u (%.0f) \n",i,j,k,current_vthr2[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k],frequency*(2*SLEEP_TIME/1e6+0.025)+1);
+                //printf("%2d %2d %2d: %3d, %7u (%.0f) \n",i,j,k,current_vthr2[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k],frequency*(2*SLEEP_TIME/1e6+0.025)+1);
 
                 // First check for issues, if there is one, max the threshold
                 if (current_vthr2[i*16*32+j*32+k] <= vthr_zeros[i*16*32+j*32+k] 
                     || current_vthr2[i*16*32+j*32+k] == 255
                     || current_vthr2[i*16*32+j*32+k] == 0){
                   current_vthr2[i*16*32+j*32+k] = 255;
-                  printf("Done Error: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
+                  //printf("Done Error: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
                   break;
                 }
                 // Look for thresholds at or below 5 counts, set hard limit there
@@ -488,7 +496,7 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                   else{
                     current_vthr2[i*16*32+j*32+k] = vthr_zeros[i*16*32+j*32+k] + 6;
                   }
-                  printf("Done Min Thresh: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
+                  //printf("Done Min Thresh: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
                   break;
                 }
                 // Look for channels that are too noisy now, try and step them up 1 count
@@ -501,12 +509,12 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
                   if(steps > 0){
                     current_vthr2[i*16*32+j*32+k]++;
                   }
-                  printf("Done: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
+                  //printf("Done: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
                   break;
                 }
                 // Don't step any threshold down more then 3 times, otherwise they get too noisy
                 else if (steps == 3){
-                  printf("Done: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
+                  //printf("Done: %2d %2d %2d: %3d \n",i,j,k,current_vthr2[i*16*32+j*32+k]);
                   break;
                 }
                 // Channel is quiet, step the threshold down and try again
@@ -528,7 +536,10 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
     // Disable Peds, now lets go look for noisy channels
     mtc->DisablePulser();
 
-    int count_noisy_channels;
+    // Noisy channels are identified as channels firing at more 
+    // than 100Hz at low voltage with no pedestals going. The 
+    // discriminator thresholds are stepped up a maximum of 5
+    // DAC counts before giving up
     for (int i=0;i<MAX_XL3_CON;i++){
      if ((0x1<<i) & crateMask){
         int slotIter = 0;
@@ -536,10 +547,15 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
         for (int j=0;j<16;j++){
           if ((0x1<<j) & slotMasks[i]){
             for (int k=0;k<32;k++){
-              count_noisy_channels = 0;
+              int count_noisy_channels = 0;
               while(true){
                 int steps = 0;
                 int done = 0;
+
+                // Channel is definitely broken, so just give up
+                if(current_vthr2[i*16*32+j*32+k] > 250){
+                   break;
+                }
 
                 slot_nums[k] = j;
                 dac_nums[k] = d_vthr[k];
@@ -584,12 +600,12 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
 
                 // Look for rates above 100Hz
                 if(readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME*1e-6) > MAX_NOISE_RATE){
-                  lprintf("Noisy > %3dHz: %2d %2d %2d: %3d %.2f \n",MAX_NOISE_RATE,i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME*1e-6));
+                  //lprintf("Noisy > %3dHz: %2d %2d %2d: %3d %.2f \n",MAX_NOISE_RATE,i,j,k,current_vthr2[i*16*32+j*32+k], readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME*1e-6));
                   current_vthr2[i*16*32+j*32+k] += 1;
                   count_noisy_channels += 1;
                 }
                 else{
-                  lprintf("Not Noisy: %2d %2d %2d: Vthr: %3d Noise Freq: %.2f \n",i,j,k,current_vthr2[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME*1e-6));
+                  //lprintf("Not Noisy: %2d %2d %2d: Vthr: %3d Noise Freq: %.2f \n",i,j,k,current_vthr2[i*16*32+j*32+k],readout_noise[i*16*32+j*32+k]/(2*SLEEP_TIME*1e-6));
                   break;
                 }
                 // Try 5 DAC counts maximum
@@ -611,20 +627,28 @@ int FindNoise(uint32_t crateMask, uint32_t *slotMasks, float frequency, int useD
       } // end loop over crates in crate mask
     }
 
-    // Print the difference
+    // Print the difference to the log and
+    // increment current_vthr2 by one
     for (int i=0;i<MAX_XL3_CON;i++){
       if ((0x1<<i) & crateMask){
         for (int j=0;j<16;j++){
           if ((0x1<<j) & slotMasks[i]){
-            lprintf("Crate/Slot: %2d/%d \n",i,j); 
+            lprintf("Crate/Slot: %2d/%d \n",i,j);
+            lprintf(" Ch  Method1  Method2 \n");
+            lprintf("--------------------- \n");
             for (int k=0;k<32;k++){
-              lprintf("%2d: Thr-Zero: %3d %3d Abs. Thr: %3d %3d \n",k,current_vthr[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k],current_vthr2[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k], current_vthr[i*16*32+j*32+k], current_vthr2[i*16*32+j*32+k]);
+              if(plusOne){
+                if(current_vthr2[i*16*32+j*32+k] < 255){
+                  current_vthr2[i*16*32+j*32+k]+=1;
+                }
+              }
+              lprintf("%4d %6d %6d \n",k,current_vthr[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k],current_vthr2[i*16*32+j*32+k]-vthr_zeros[i*16*32+j*32+k]);
             }
           }
         }
       }
     }
-  } // end if channel
+  } // end if channelTuning
 
   if (updateDB){
     lprintf("Updating the database\n");

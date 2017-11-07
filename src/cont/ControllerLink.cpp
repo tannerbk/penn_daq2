@@ -1597,14 +1597,15 @@ void *ControllerLink::ProcessCommand(void *arg)
 
   }else if (strncmp(input,"find_noise",10) == 0){
     if (GetFlag(input,'h')){
-      lprintf("Usage: find_noise -c [crate mask (hex)] -(00-18) [slot masks (hex)] -s [all slot masks (hex)] -f [ped frequency (int)] -c (include individual channel threshold tuning) -d (update database)\n");
+      lprintf("Usage: find_noise -c [crate mask (hex)] -(00-18) [slot masks (hex)] -s [all slot masks (hex)] \n -f [ped frequency (int)] \n -i (include individual channel threshold tuning) \n -o (use with -i flag to increment channel thresholds by one) \n -d (update database)\n");
       goto err;
     }
     uint32_t crateMask = GetUInt(input,"c",0x4);
     uint32_t slotMasks[MAX_XL3_CON];
     GetMultiUInt(input,MAX_XL3_CON,'s',slotMasks,0xFFFF);
     float frequency = GetFloat(input,'f',200);
-    int channel = GetFlag(input,'c');
+    int channelTuning = GetFlag(input,'i');
+    int plusOne = GetFlag(input, 'o');
     int updateDB = GetFlag(input,'d');
     int busy = LockConnections(1,crateMask);
     if (busy){
@@ -1614,7 +1615,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    FindNoise(crateMask,slotMasks,frequency,1,channel,updateDB);
+    FindNoise(crateMask,slotMasks,frequency,1,channelTuning,plusOne,updateDB);
     UnlockConnections(1,crateMask);
 
   }else if (strncmp(input,"dac_sweep",9) == 0){
