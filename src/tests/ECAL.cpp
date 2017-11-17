@@ -39,7 +39,6 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     lprintf("Problem enabling logging for ecal, could not open log file!\n");
 
   lprintf("*** Starting ECAL *****************************\n");
-  lprintf("*** Make sure the ECAL cable is plugged in ****\n");
 
   char comments[1000];
   memset(comments,'\0',1000);
@@ -299,7 +298,6 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
   }
 
   lprintf("**********************************************\n");
-  lprintf("*** Make sure the ECAL cable is unplugged ****\n");
   fclose(ecalLogFile);
   return 0;
 }
