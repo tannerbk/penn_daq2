@@ -258,6 +258,8 @@ int FinalTest(int crateNum, uint32_t slotMask, uint32_t testMask, int skip)
     }
   }
 
+  CrateInit(crateNum,slotMask,0,0,0,0,0,0,0,0);
+
   lprintf("----------------------------------------\n");
   lprintf("Final Test finished!\n");
   lprintf("****************************************\n");
