@@ -5,6 +5,7 @@
 #include "DB.h"
 #include "XL3Model.h"
 #include "FECTest.h"
+#include "XL3Cmds.h"
 
 int FECTest(int crateNum, uint32_t slotMask, int updateDB, int finalTest, int ecal)
 {
@@ -58,8 +59,9 @@ int FECTest(int crateNum, uint32_t slotMask, int updateDB, int finalTest, int ec
       }
     }
 
-
-
+    // FEC test is leaving triggers enabled, temporary solution
+    // to make sure they are off after running FEC test
+    CrateInit(crateNum,slotMask,0,0,0,0,0,0,0,0,0);
   }
   catch(const char* s){
     lprintf("FECTest: %s\n",s);
