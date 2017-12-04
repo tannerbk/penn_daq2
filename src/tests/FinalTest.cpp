@@ -247,8 +247,9 @@ int FinalTest(int crateNum, uint32_t slotMask, uint32_t testMask, int skip)
   CrateInit(crateNum,slotMask,1,0,0,0,0,0,0,0,0);
 
   if ((0x1<<testCounter) & testMask){
-    lprintf("Ready for see_refl test. Hit enter to enable triggers and continue.\n\a");
+    lprintf("Ready for see_refl test. Hit enter to enable triggers and continue or quit to skip and finish.\n\a");
 
+    contConnection->GetInput(comments);
     if (strncmp("quit",comments,4) != 0){
       SeeReflection(crateNum,slotMask,0xFFFFFFFF,255,1000,updateDB,0,1);
     }
