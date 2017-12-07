@@ -42,8 +42,7 @@ int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dac
       if ((0x1<<i) & slotMask){
 
         // Enable triggers on this slot
-        if( finalTest == 0)
-          CrateInit(crateNum, slotMask,0,0,0,0,0,0,0,0,1);
+        CrateInit(crateNum, slotMask,0,0,0,0,0,0,0,0,1);
 
         if(updateDetectorDB){
           lprintf(RED "Updating detectordb, 0 = Missing n100 and Missing n20, 1 = Missing N100, 2 = Missing N20.\n" RESET);
@@ -113,8 +112,7 @@ int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dac
         xl3s[crateNum]->SetupChargeInjection((0x1<<i),0x0,dacValue);
 
         // turn off triggers for this slot
-        if( finalTest == 0)
-          CrateInit(crateNum,slotMask,0,0,0,0,0,0,0,0,0);
+        CrateInit(crateNum,slotMask,0,0,0,0,0,0,0,0,0);
 
         // update the database
         if (updateDB){

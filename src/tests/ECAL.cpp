@@ -39,7 +39,6 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     lprintf("Problem enabling logging for ecal, could not open log file!\n");
 
   lprintf("*** Starting ECAL *****************************\n");
-  lprintf("*** Make sure the ECAL cable is plugged in ****\n");
 
   char comments[1000];
   memset(comments,'\0',1000);
@@ -173,7 +172,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
 
     for (int i=0;i<MAX_XL3_CON;i++)
       if ((0x1<<i) & crateMask)
-        CrateInit(i,slotMasks[i],1,0,0,0,0,0,0,0);
+        CrateInit(i,slotMasks[i],1,0,0,0,0,0,0,0,0);
     MTCInit(1);
 
     if (strlen(loadECAL) == 0){
@@ -205,7 +204,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
 
     for (int i=0;i<MAX_XL3_CON;i++)
       if ((0x1<<i) & crateMask)
-        CrateInit(i,slotMasks[i],0,0,0,0,0,0,0,0);
+        CrateInit(i,slotMasks[i],0,0,0,0,0,0,0,0,0);
 
     if ((0x1<<testCounter) & testMask)
       for (int i=0;i<MAX_XL3_CON;i++)
@@ -216,7 +215,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     // load cbal values
     for (int i=0;i<MAX_XL3_CON;i++)
       if ((0x1<<i) & crateMask)
-        CrateInit(i,slotMasks[i],0,1,0,0,0,0,0,0);
+        CrateInit(i,slotMasks[i],0,1,0,0,0,0,0,0,0);
 
     if ((0x1<<testCounter) & testMask)
       for (int i=0;i<MAX_XL3_CON;i++)
@@ -227,7 +226,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     MTCInit(1);
     for (int i=0;i<MAX_XL3_CON;i++)
       if ((0x1<<i) & crateMask)
-        CrateInit(i,slotMasks[i],0,1,0,0,0,0,0,0);
+        CrateInit(i,slotMasks[i],0,1,0,0,0,0,0,0,0);
 
     try {
       tubii->SetECALBit(1);
@@ -244,7 +243,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     // load cbal and tdisc values
     for (int i=0;i<MAX_XL3_CON;i++)
       if ((0x1<<i) & crateMask)
-        CrateInit(i,slotMasks[i],0,1,0,1,0,0,0,0);
+        CrateInit(i,slotMasks[i],0,1,0,1,0,0,0,0,0);
 
     if ((0x1<<testCounter) & testMask)
       for (int i=0;i<MAX_XL3_CON;i++)
@@ -260,7 +259,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
 
     for (int i=0;i<MAX_XL3_CON;i++)
       if ((0x1<<i) & crateMask)
-        CrateInit(i,slotMasks[i],0,1,0,1,0,0,0,0);
+        CrateInit(i,slotMasks[i],0,1,0,1,0,0,0,0,0);
 
     if ((0x1<<testCounter) & testMask)
       for (int i=0;i<MAX_XL3_CON;i++)
@@ -271,7 +270,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     MTCInit(1);
     for (int i=0;i<MAX_XL3_CON;i++)
       if ((0x1<<i) & crateMask)
-        CrateInit(i,slotMasks[i],0,1,0,1,0,0,0,0);
+        CrateInit(i,slotMasks[i],0,1,0,1,0,0,0,0,0);
 
     if ((0x1<<testCounter) & testMask)
           GTValidTest(crateMask,slotMasks,0xFFFFFFFF,410,0,quickFlag,1,0,1);
@@ -281,7 +280,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     // load cbal, tdisc, tcmos values
     for (int i=0;i<MAX_XL3_CON;i++)
       if ((0x1<<i) & crateMask)
-        CrateInit(i,slotMasks[i],0,1,0,1,1,0,0,0);
+        CrateInit(i,slotMasks[i],0,1,0,1,1,0,0,0,0);
 
     if ((0x1<<testCounter) & testMask)
       for (int i=0;i<MAX_XL3_CON;i++)
@@ -299,7 +298,6 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
   }
 
   lprintf("**********************************************\n");
-  lprintf("*** Make sure the ECAL cable is unplugged ****\n");
   fclose(ecalLogFile);
   return 0;
 }
