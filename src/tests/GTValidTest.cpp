@@ -495,7 +495,6 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
                 chan_errors[crateNum][i][j] = 1;
             }
 
-
             //store in DB
             if (updateDB){
               lprintf("updating the database\n");
@@ -536,15 +535,13 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
               json_append_member(newdoc,"pass",json_mkbool(!(slot_errors)));
               json_append_member(newdoc,"slot_errors",json_mknumber(slot_errors));
               if (finalTest)
-                json_append_member(newdoc,"final_test_id",json_mkstring(finalTestIDs[crateNum][i]));	
+                json_append_member(newdoc,"final_test_id",json_mkstring(finalTestIDs[crateNum][i]));
               if (ecal)
-                json_append_member(newdoc,"ecal_id",json_mkstring(ecalID));	
+                json_append_member(newdoc,"ecal_id",json_mkstring(ecalID);
               PostDebugDoc(crateNum,i,newdoc);
               json_delete(newdoc); // only delete the head
             }
             lprintf("******************************************\n");
-
-
 
           } // end in slotmask
         } // end loop over slots

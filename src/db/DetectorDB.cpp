@@ -217,16 +217,24 @@ int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalI
   return 0;
 }
 
+int UpdateGTValidAndZDisc(int type, int crate, int slot, int channel, PGConn* detectorDB){
+
+}
+
 int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* detectorDB){
 
   char updateN100[8] = "True";
   char updateN20[8] = "True";
+  char updateESUMH[8] = "True";
 
   if(type == 1){
     strcpy(updateN20, "False");
   }
   else if(type == 2){
     strcpy(updateN100, "False");
+  }
+  else if(type == 3){
+    strcpy(updateESUMH = "False");
   }
   else if(type !=0){
     lprintf("Error getting missing trigger type.\n");
@@ -235,13 +243,13 @@ int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* dete
 
   char query[2048];
   sprintf(query, "INSERT INTO channel_status "
-   "(crate,slot,channel,pmt_removed,pmt_reinstalled,low_occupancy,zero_occupancy, "
-   "screamer,bad_discriminator,no_n100,no_n20,no_esum,cable_pulled,bad_cable, "
-   "resistor_pulled,disable_n100,disable_n20,bad_base_current,high_dropout,bad_data) "
+   "(crate, slot, channel, pmt_removed, pmt_reinstalled, low_occupancy, zero_occupancy, "
+   "screamer, bad_discriminator, no_n100, no_n20, no_esum, cable_pulled, bad_cable, "
+   "resistor_pulled, disable_n100, disable_n20, bad_base_current, high_dropout, bad_data) "
    "SELECT "
-   "crate,slot,channel,pmt_removed,pmt_reinstalled,low_occupancy,zero_occupancy, "
-   "screamer,bad_discriminator,no_n100,no_n20,no_esum,cable_pulled,bad_cable, "
-   "resistor_pulled,disable_n100,disable_n20,bad_base_current,high_dropout,bad_data "
+   "crate, slot, channel, pmt_removed, pmt_reinstalled, low_occupancy, zero_occupancy, "
+   "screamer, bad_discriminator, no_n100, no_n20, no_esum, cable_pulled, bad_cable, "
+   "resistor_pulled, disable_n100, disable_n20, bad_base_current, high_dropout, bad_data "
    "FROM channel_status "
    "WHERE crate=%d AND slot=%d AND channel=%d "
    "ORDER by timestamp DESC limit 1",
@@ -254,7 +262,7 @@ int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* dete
   PQclear(qResult);
 
   sprintf(query, "UPDATE channel_status "
-    "SET no_n100=%s, no_n20=%s WHERE crate = %d and slot = %d AND "
+    "SET no_n100=%s, no_n20=%s, no_esum=%s WHERE crate = %d and slot = %d AND "
     "channel = %d AND timestamp = (SELECT max(timestamp) FROM channel_status "
     "WHERE crate=%d and slot = %d and channel = %d)", updateN100, updateN20,
     crate, slot, channel, crate, slot, channel);

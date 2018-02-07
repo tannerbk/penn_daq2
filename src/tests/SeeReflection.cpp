@@ -45,11 +45,11 @@ int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dac
         CrateInit(crateNum, slotMask,0,0,0,0,0,0,0,0,1);
 
         if(updateDetectorDB){
-          lprintf(RED "Updating detectordb, 0 = Missing n100 and Missing n20, 1 = Missing N100, 2 = Missing N20.\n" RESET);
+          lprintf(RED "Updating detectordb, 0 = Missing n100 and Missing n20, 1 = Missing N100, 2 = Missing N20, 3 = Misssing ESUMH.\n" RESET);
           detectorDB = ConnectToDetectorDB();
         }
         else{
-          lprintf(RED "0 = Missing n100 and Missing n20, 1 = Missing N100, 2 = Missing N20, or just type in a custom message and hit enter.\n" RESET);
+          lprintf(RED "0 = Missing n100 and Missing n20, 1 = Missing N100, 2 = Missing N20, 3 = Missing ESUMH or just type in a custom message and hit enter.\n" RESET);
         }
 
         // loop over channels
@@ -96,6 +96,11 @@ int SeeReflection(int crateNum, uint32_t slotMask, uint32_t channelMask, int dac
                 strcpy(channel_results[j],"Missing N20.\n");
                 if(updateDetectorDB)
                   UpdateTriggerStatus(2, crateNum, i, j, detectorDB);
+              }
+              else if(strncmp(channel_results[j],"3",1) == 0){
+                strcpy(channel_results[j],"Missing ESUMH.\n");
+                if(updateDetectorDB)
+                  UpdateTriggerStatus(3, crateNum, i, j, detectorDB);
               }
             }
 
