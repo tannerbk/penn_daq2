@@ -537,7 +537,7 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
               if (finalTest)
                 json_append_member(newdoc,"final_test_id",json_mkstring(finalTestIDs[crateNum][i]));
               if (ecal)
-                json_append_member(newdoc,"ecal_id",json_mkstring(ecalID);
+                json_append_member(newdoc,"ecal_id",json_mkstring(ecalID));
               PostDebugDoc(crateNum,i,newdoc);
               json_delete(newdoc); // only delete the head
             }

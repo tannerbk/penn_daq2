@@ -217,9 +217,9 @@ int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalI
   return 0;
 }
 
-int UpdateGTValidAndZDisc(int type, int crate, int slot, int channel, PGConn* detectorDB){
+//int UpdateGTValidAndZDisc(int type, int crate, int slot, int channel, PGConn* detectorDB){
 
-}
+//}
 
 int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* detectorDB){
 
@@ -234,7 +234,7 @@ int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* dete
     strcpy(updateN100, "False");
   }
   else if(type == 3){
-    strcpy(updateESUMH = "False");
+    strcpy(updateESUMH, "False");
   }
   else if(type !=0){
     lprintf("Error getting missing trigger type.\n");
@@ -264,7 +264,7 @@ int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* dete
   sprintf(query, "UPDATE channel_status "
     "SET no_n100=%s, no_n20=%s, no_esum=%s WHERE crate = %d and slot = %d AND "
     "channel = %d AND timestamp = (SELECT max(timestamp) FROM channel_status "
-    "WHERE crate=%d and slot = %d and channel = %d)", updateN100, updateN20,
+    "WHERE crate=%d and slot = %d and channel = %d)", updateN100, updateN20, updateESUMH,
     crate, slot, channel, crate, slot, channel);
 
   qResult = PQexec(detectorDB, query);

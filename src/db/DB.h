@@ -14,8 +14,22 @@
 #define DEF_DB_BASE_NAME "penndb1"
 #define DEF_DB_VIEWDOC "_design/view_doc/_view"
 
+// Critical ECAL tests, must run with each ECAL
 const static int ntests = 5;
 static const char test_map[ntests][20] = {"crate_cbal","zdisc","set_ttot","cmos_m_gtvalid","find_noise_2"};
+
+// A couple non-critical test that are useful to keep track of errors for
+const static int nntests = 3;
+static const char test_map_ncrit[nntests][20] = {"ped_run", "cgt_test", "get_ttot"};
+
+// Map from test to error bit
+const int cbal_fail = 0;
+const int zdisc_fail = 1;
+const int sttot_fail = 2;
+const int gtvalid_fail = 3;
+const int ped_fail = 4;
+const int cgt_fail = 5;
+const int gttot_fail = 6;
 
 int GetNewID(char* newid);
 
@@ -25,7 +39,7 @@ int SwapFECDB(MB* mb);
 int ParseMTC(JsonNode* value,MTC* mtc);
 
 int CreateFECDBDoc(int crate, int card, JsonNode** doc_p, JsonNode *ecal_doc);
-int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc);
+int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc, unsigned int* chan_prob_array);
 int PostFECDBDoc(int crate, int slot, JsonNode *doc);
 int UpdateFECDBDoc(JsonNode *doc);
 int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* id, PGconn* detectorDB);

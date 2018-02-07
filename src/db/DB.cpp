@@ -311,7 +311,7 @@ int CreateFECDBDoc(int crate, int card, JsonNode** doc_p, JsonNode *ecal_doc)
 }
 
 
-int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc){
+int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc, unsigned int* chan_prob_array){
 
   int i,j;
   char type[50];
@@ -320,16 +320,6 @@ int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc){
 
   JsonNode *channel_status = json_find_member(fec_doc,"channel");
   json_remove_from_parent(channel_status);
-  JsonNode *chan_problems = json_find_member(channel_status,"problem");
-  uint32_t chan_prob_array = 0x0;
-  for (i=0;i<32;i++){
-    if ((int) json_get_number(json_find_element(chan_problems,i)) != 0){
-      chan_prob_array |= (0x1<<i);
-    }
-  }
-
-  JsonNode *relays = json_find_member(fec_doc,"relay_on");
-  json_remove_from_parent(relays);
 
   sprintf(type,"%s",json_get_string(json_find_member(test_doc,"type")));
   JsonNode *test_entry = json_mkobject();
@@ -346,6 +336,10 @@ int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc){
       JsonNode *one_chan = json_find_element(channels,i);
       json_append_element(high,json_mknumber(json_get_number(json_find_member(one_chan,"vbal_high"))));
       json_append_element(low,json_mknumber(json_get_number(json_find_member(one_chan,"vbal_low"))));
+      int error = (int)json_get_bool(json_find_member(one_chan,"errors"));
+      if(error){
+        chan_prob_array[i] |= (1<<cbal_fail);
+      }
     }
     json_append_element(vbal,high);
     json_append_element(vbal,low);
@@ -355,8 +349,13 @@ int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc){
   else if (strcmp(type,"zdisc") == 0){
     JsonNode *vthr_zero = json_mkarray();
     JsonNode *vals = json_find_member(test_doc,"zero_dac");
+    JsonNode *errors = json_find_member(test_doc,"errors");
     for (i=0;i<32;i++){
       json_append_element(vthr_zero,json_mknumber(json_get_number(json_find_element(vals,i))));
+      int error = json_get_bool(json_find_element(errors,i));
+      if(error != 0){
+        chan_prob_array[i] |= (1<<zdisc_fail);
+      }
     }
     json_append_member(hw,"vthr_zero",vthr_zero);
     count_tests[1]+=1;
@@ -373,9 +372,8 @@ int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc){
      JsonNode *channels = json_find_member(one_chip,"channels");
      for (j=0;j<4;j++){
        JsonNode *one_chan = json_find_element(channels,j);
-       JsonNode *one_chan_stat = json_find_element(chan_problems,j);
        if ((int)json_get_number(json_find_member(one_chan,"errors")) == 2){
-         chan_prob_array |= (0x1<<(i*4+j));
+         chan_prob_array[i*4+j] |= (1<<sttot_fail);
        }
      }
      json_append_element(rmp,json_mknumber(json_get_number(json_find_member(one_chip,"rmp"))));
@@ -408,9 +406,8 @@ int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc){
     JsonNode *tac_trim = json_mkarray();
     for (i=0;i<32;i++){
       JsonNode *one_chan = json_find_element(channels,i);
-      int chan_num = (int) json_get_number(json_find_member(onechan,"id"));
       if (json_get_bool(json_find_member(one_chan,"errors"))){
-        chan_prob_array |= (0x1<<chan_num);
+        chan_prob_array[i] |= (1<<gtvalid_fail);
       }
       json_append_element(tac_trim,json_mknumber(json_get_number(json_find_member(one_chan,"tac_shift"))));
     }
@@ -432,8 +429,8 @@ int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc){
   else if (strcmp(type,"ped_run") == 0){
     JsonNode *errors = json_find_member(test_doc,"error_flags");
     for (i=0;i<32;i++){
-      if (((int)json_get_number(json_find_element(errors,i)) == 3) || ((int)json_get_number(json_find_element(errors,i)) == 1)){
-        chan_prob_array |= (0x1<<i);
+      if (((int)json_get_number(json_find_element(errors,i)) != 0)){
+        chan_prob_array[i] |= (1<<ped_fail);
       }
     }
   }
@@ -441,7 +438,7 @@ int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc){
     JsonNode *errors = json_find_member(test_doc,"errors");
     for (i=0;i<32;i++){
       if (json_get_bool(json_find_element(errors,i))){
-        chan_prob_array |= (0x1<<i);
+        chan_prob_array[i] |= (1<<cgt_fail);
       }
     }
   }
@@ -451,40 +448,19 @@ int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc){
       JsonNode *onechan = json_find_element(channels,i);
       int chan_num = (int) json_get_number(json_find_member(onechan,"id"));
       if ((int) json_get_number(json_find_member(onechan,"errors")) == 1){
-        chan_prob_array |= (0x1<<chan_num);
+        chan_prob_array[i] |= (1<<gttot_fail);
       }
     }
   }
-  else if (strcmp(type,"disc_check") == 0){
-    JsonNode *channels = json_find_member(test_doc,"channels");
-    for (i=0;i<32;i++){
-      JsonNode *onechan = json_find_element(channels,i);
-      int chan_num = (int) json_get_number(json_find_member(onechan,"id"));
-      if ((int) json_get_number(json_find_member(onechan,"count_minus_peds")) > 10000 || (int) json_get_number(json_find_member(onechan,"count_minus_peds")) < -10000){
-        chan_prob_array |= (0x1<<chan_num);
-      }
-    }
-  }
+  // TODO -- could add FEC test, disc check here
 
   JsonNode *new_channel = json_mkobject();
   JsonNode *new_chan_problems = json_mkarray();
   for (i=0;i<32;i++){
-    if ((0x1<<i) & chan_prob_array)
-      json_append_element(new_chan_problems,json_mknumber(1));
-    else
-      json_append_element(new_chan_problems,json_mknumber(0));
+    json_append_element(new_chan_problems,json_mknumber(chan_prob_array[i]));
   }
   json_append_member(new_channel,"problem",new_chan_problems);
   json_append_member(fec_doc,"channel",new_channel);
-
-  JsonNode *new_relays = json_mkarray();
-  for (i=0;i<4;i++){
-    if (((0xFF<<(i*8)) & chan_prob_array) == (0xFF<<(i*8)) || (int)json_get_number(json_find_element(relays,i)) == 0)
-      json_append_element(new_relays,json_mknumber(0));
-    else
-      json_append_element(new_relays,json_mknumber(1));
-  }
-  json_append_member(fec_doc,"relay_on",new_relays);
 
   return 0;
 }
@@ -786,12 +762,19 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
           JsonNode *doc;
           CreateFECDBDoc(i,j,&doc,ecalconfig_doc);
 
-          int time[5];
+          int time[ntests];
           for(int testRan = 0; testRan < ntests; testRan++){
              count_tests[testRan]=0;
              time[testRan] = 0;
           }
 
+          // Keeps track of channels with issues during the ECAL
+          unsigned int chan_prob_array[32];
+          for(int z = 0; z < 32; z++){
+            chan_prob_array[z] = 0;
+          }
+
+          // This is for making sure we grab the most recent test
           for (int k=0;k<total_rows;k++){
             JsonNode *ecalone_row = json_find_element(ecal_rows,k);
             JsonNode *test_doc = json_find_member(ecalone_row,"value");
@@ -813,11 +796,13 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             }
           }
 
+          // Now we add the ECAL info to the FEC doc for the critical tests
           for (int k=0;k<total_rows;k++){
             JsonNode *ecalone_row = json_find_element(ecal_rows,k);
             JsonNode *test_doc = json_find_member(ecalone_row,"value");
             JsonNode *config = json_find_member(test_doc,"config");
             char *testtype = json_get_string(json_find_member(test_doc,"type"));
+            // Check if the test is a critical test
             for(int ttype=0; ttype<ntests; ttype++){
               if(strcmp(testtype, test_map[ttype])==0){
                 int timestamp = (int)json_get_number(json_find_member(test_doc,"timestamp"));
@@ -825,10 +810,17 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
                 int slot = json_get_number(json_find_member(config,"slot"));
                 if(crate == i && slot == j){
                   if(timestamp == time[ttype]){
-                    printf("test type %s \n", test_map[ttype]);
-                    AddECALTestResults(doc,test_doc);
+                    printf("critical test type %s \n", test_map[ttype]);
+                    AddECALTestResults(doc,test_doc,chan_prob_array);
                   }
                 }
+              }
+            }
+            // Make sure to get error flags for the non-critical test
+            for(int ttype=0; ttype<nntests; ttype++){
+              if(strcmp(testtype, test_map_ncrit[ttype])==0){
+                printf("non-critical test type %s \n", test_map_ncrit[ttype]);
+                AddECALTestResults(doc,test_doc,chan_prob_array);
               }
             }
           }
