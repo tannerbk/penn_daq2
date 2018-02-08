@@ -217,10 +217,6 @@ int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalI
   return 0;
 }
 
-//int UpdateGTValidAndZDisc(int type, int crate, int slot, int channel, PGConn* detectorDB){
-
-//}
-
 int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* detectorDB){
 
   char updateN100[8] = "True";
