@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 
   int err = setupListeners();
   if (err){
-    lprintf("There was a problem opening the ports. Is another instance of penn_daq running?\n");
+    lprintf("There was a problem opening the ports. Is the xl3-server or another instance of penn_daq running?\n");
     exit(0);
   }
 
