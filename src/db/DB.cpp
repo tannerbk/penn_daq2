@@ -825,6 +825,18 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             }
           }
 
+          for(int nChannel = 0; nChannel < 32; nChannel++){
+            // Query channel status here
+            if(chan_prob_array[nChannel] & (1<<zdisc_fail)){
+              if(LoadBadDiscToDetectorDB(i, j, nChannel, detectorDB)){
+                lprintf("Warning Failure Loading Bad Disc to channeldb for crate %d slot % d channel %d \n", i, j, nChannel);
+              }
+              else{
+                lprintf("Warning Failure Loading Bad Disc to channeldb for crate %d slot % d channel %d \n", i, j, nChannel);
+              }
+            }
+          }
+
           int didalltestsrun = 0;
           for(int testRan = 0; testRan < ntests; testRan++){
             if(count_tests[testRan] == 0){
@@ -854,13 +866,19 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
 
   // Print at the end all of the slots that could not upload FEC docs
   // because of a missing test.
-  for (int i=0;i<MAX_XL3_CON;i++)
-    if ((0x1<<i) & crateMask)
-      for (int j=0;j<16;j++)
-        if ((0x1<<j) & slotMasks[i])
-          for(int k=0; k<ntests; k++)
-            if(not_run[k][i][j] == 1)
+  for (int i=0;i<MAX_XL3_CON;i++){
+    if ((0x1<<i) & crateMask){
+      for (int j=0;j<16;j++){
+        if ((0x1<<j) & slotMasks[i]){
+          for(int k=0; k<ntests; k++){
+            if(not_run[k][i][j] == 1){
               lprintf("WARNING: FEC document not created for crate %d slot %d due to missing %s.\n",i,j,test_map[k]);  
+            }
+          }
+        }
+      }
+    }
+  }
 
   json_delete(ecalfull_doc);
   pr_free(ecal_response);
@@ -932,8 +950,6 @@ int UpdateLocation(uint16_t *ids, int *crates, int *slots, int *positions, int b
       return -1;
     }
     doc = json_decode(response->resp.data);
-
-
 
     char idstrings[16*6][5];
     for (int i=0;i<boardcount;i++){

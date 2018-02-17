@@ -14,6 +14,10 @@ int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID
 
 int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB);
 
+int LoadBadDiscToDetectorDB(int crate, int slot, int channel, PGconn* detectorDB);
+
+int UpdateChannelStatus(int crate, int slot, int channel, PGconn* detectorDB);
+
 // Tool used for formatting SQL query for arrays size
 void AppendStringArray(JsonNode* array, char* buffer, int size);
 void AppendStringIntArray(int* array, char* buffer, int size);

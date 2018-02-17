@@ -23,13 +23,9 @@ const static int nntests = 3;
 static const char test_map_ncrit[nntests][20] = {"ped_run", "cgt_test", "get_ttot"};
 
 // Map from test to error bit
-const int cbal_fail = 0;
-const int zdisc_fail = 1;
-const int sttot_fail = 2;
-const int gtvalid_fail = 3;
-const int ped_fail = 4;
-const int cgt_fail = 5;
-const int gttot_fail = 6;
+enum Bit { cbal_fail = 0, zdisc_fail = 1, sttot_fail = 2, 
+           gtvalid_fail = 3, ped_fail = 4, cgt_fail = 5, 
+           gttot_fail = 6 };
 
 int GetNewID(char* newid);
 
