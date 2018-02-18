@@ -89,25 +89,25 @@ int LoadBadDiscToDetectorDB(int crate, int slot, int channel, PGconn* detectorDB
   }
 
   char query[2048];
-  sprintf(query, "UPDATE channel_status "
-    "SET bad_discriminator = 'True' WHERE crate = %d and slot = %d AND "
-    "channel = %d AND reason = 'zdisc test failed' AND name = 'ECAL' AND "
-    "timestamp = (SELECT max(timestamp) FROM channel_status "
-    "WHERE crate=%d and slot = %d and channel = %d)",
-    crate, slot, channel, crate, slot, channel);
+  char status[8] = "True";
+  char name[8] = "ECAL";
+  char reason[32] = "zdisc failed";
 
-  qResult = PQexec(detectorDB, query);
+  sprintf(query, "UPDATE channel_status "
+    "SET bad_discriminator=%s, name='%s', reason='%s' "
+    "WHERE crate=%d AND slot=%d AND channel=%d AND "
+    "timestamp = (SELECT max(timestamp) FROM channel_status "
+    "WHERE crate=%d AND slot = %d AND channel = %d)", status,
+    name, reason, crate, slot, channel, crate, slot, channel);
+
+  PGresult *qResult = PQexec(detectorDB, query);
   if(CheckResultStatus(qResult, detectorDB)){
     lprintf("Failed to update channel status.\n");
     return 1;
   }
   PQclear(qResult);
 
-  lprintf("Succesfully updated detector DB with missing triggers: N100 = %s and N20 = %s.\n",updateN100, updateN20);
   return 0;
-
-  return 0;
-
 };
 
 int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB){
@@ -271,13 +271,15 @@ int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* dete
     return 1;
   }
 
+  char query[2048];
+
   sprintf(query, "UPDATE channel_status "
-    "SET no_n100=%s, no_n20=%s, no_esum=%s WHERE crate = %d and slot = %d AND "
+    "SET no_n100=%s, no_n20=%s, no_esum=%s WHERE crate = %d AND slot = %d AND "
     "channel = %d AND timestamp = (SELECT max(timestamp) FROM channel_status "
-    "WHERE crate=%d and slot = %d and channel = %d)", updateN100, updateN20, updateESUMH,
+    "WHERE crate=%d AND slot = %d AND channel = %d)", updateN100, updateN20, updateESUMH,
     crate, slot, channel, crate, slot, channel);
 
-  qResult = PQexec(detectorDB, query);
+  PGresult *qResult = PQexec(detectorDB, query);
   if(CheckResultStatus(qResult, detectorDB)){
     lprintf("Failed to update channel status.\n");
     return 1;
