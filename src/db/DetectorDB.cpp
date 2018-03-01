@@ -81,6 +81,35 @@ void AppendStringArray(JsonNode* array, char* buffer, int size){
   strcpy(buffer, returnstring);
 }
 
+int LoadBadDiscToDetectorDB(int crate, int slot, int channel, PGconn* detectorDB){
+
+  if(UpdateChannelStatus(crate, slot, channel, detectorDB)){
+    lprintf("Failed to insert into channel status.\n");
+    return 1;
+  }
+
+  char query[2048];
+  char status[8] = "True";
+  char name[8] = "ECAL";
+  char reason[32] = "zdisc failed";
+
+  sprintf(query, "UPDATE channel_status "
+    "SET bad_discriminator=%s, name='%s', reason='%s' "
+    "WHERE crate=%d AND slot=%d AND channel=%d AND "
+    "timestamp = (SELECT max(timestamp) FROM channel_status "
+    "WHERE crate=%d AND slot = %d AND channel = %d)", status,
+    name, reason, crate, slot, channel, crate, slot, channel);
+
+  PGresult *qResult = PQexec(detectorDB, query);
+  if(CheckResultStatus(qResult, detectorDB)){
+    lprintf("Failed to update channel status.\n");
+    return 1;
+  }
+  PQclear(qResult);
+
+  return 0;
+};
+
 int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB){
 
   char str_vthr_zero[512];
@@ -221,6 +250,7 @@ int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* dete
 
   char updateN100[8] = "True";
   char updateN20[8] = "True";
+  char updateESUMH[8] = "True";
 
   if(type == 1){
     strcpy(updateN20, "False");
@@ -228,20 +258,49 @@ int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* dete
   else if(type == 2){
     strcpy(updateN100, "False");
   }
+  else if(type == 3){
+    strcpy(updateESUMH, "False");
+  }
   else if(type !=0){
     lprintf("Error getting missing trigger type.\n");
     return 1;
   }
 
+  if(UpdateChannelStatus(crate, slot, channel, detectorDB)){
+    lprintf("Failed to insert into channel status.\n");
+    return 1;
+  }
+
+  char query[2048];
+
+  sprintf(query, "UPDATE channel_status "
+    "SET no_n100=%s, no_n20=%s, no_esum=%s WHERE crate = %d AND slot = %d AND "
+    "channel = %d AND timestamp = (SELECT max(timestamp) FROM channel_status "
+    "WHERE crate=%d AND slot = %d AND channel = %d)", updateN100, updateN20, updateESUMH,
+    crate, slot, channel, crate, slot, channel);
+
+  PGresult *qResult = PQexec(detectorDB, query);
+  if(CheckResultStatus(qResult, detectorDB)){
+    lprintf("Failed to update channel status.\n");
+    return 1;
+  }
+  PQclear(qResult);
+
+  lprintf("Succesfully updated detector DB with missing triggers: N100 = %s and N20 = %s.\n",updateN100, updateN20);
+  return 0;
+}
+
+int UpdateChannelStatus(int crate, int slot, int channel, PGconn* detectorDB){
+
   char query[2048];
   sprintf(query, "INSERT INTO channel_status "
-   "(crate,slot,channel,pmt_removed,pmt_reinstalled,low_occupancy,zero_occupancy, "
-   "screamer,bad_discriminator,no_n100,no_n20,no_esum,cable_pulled,bad_cable, "
-   "resistor_pulled,disable_n100,disable_n20,bad_base_current,high_dropout,bad_data) "
+   "(crate, slot, channel, pmt_removed, pmt_reinstalled, low_occupancy, zero_occupancy, "
+   "screamer, bad_discriminator, no_n100, no_n20, no_esum, cable_pulled, bad_cable, "
+   "resistor_pulled, disable_n100, disable_n20, bad_base_current, high_dropout, bad_data) "
    "SELECT "
-   "crate,slot,channel,pmt_removed,pmt_reinstalled,low_occupancy,zero_occupancy, "
-   "screamer,bad_discriminator,no_n100,no_n20,no_esum,cable_pulled,bad_cable, "
-   "resistor_pulled,disable_n100,disable_n20,bad_base_current,high_dropout,bad_data "
+   "crate, slot, channel, pmt_removed, pmt_reinstalled, low_occupancy, zero_occupancy, "
+   "screamer, bad_discriminator, no_n100, no_n20, no_esum, cable_pulled, bad_cable, "
+   "resistor_pulled, disable_n100, disable_n20, bad_base_current, high_dropout, bad_data "
    "FROM channel_status "
    "WHERE crate=%d AND slot=%d AND channel=%d "
    "ORDER by timestamp DESC limit 1",
@@ -251,21 +310,8 @@ int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* dete
   if(CheckResultStatus(qResult, detectorDB)){
     return 1;
   }
+
   PQclear(qResult);
-
-  sprintf(query, "UPDATE channel_status "
-    "SET no_n100=%s, no_n20=%s WHERE crate = %d and slot = %d AND "
-    "channel = %d AND timestamp = (SELECT max(timestamp) FROM channel_status "
-    "WHERE crate=%d and slot = %d and channel = %d)", updateN100, updateN20,
-    crate, slot, channel, crate, slot, channel);
-
-  qResult = PQexec(detectorDB, query);
-  if(CheckResultStatus(qResult, detectorDB)){
-    return 1;
-  }
-  PQclear(qResult);
-
-  lprintf("Succesfully updated detector DB with missing triggers: N100 = %s and N20 = %s.\n",updateN100, updateN20);
   return 0;
 }
 

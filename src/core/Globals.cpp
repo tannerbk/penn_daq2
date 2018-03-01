@@ -257,8 +257,8 @@ int readConfigurationFile()
       }
     }
   }
-  sprintf(DB_SERVER,"http://%s:%s@%s:%s",DB_USERNAME,DB_PASSWORD,DB_ADDRESS,DB_PORT);
-  sprintf(FECDB_SERVER,"http://%s:%s@%s:%s",FECDB_USERNAME,FECDB_PASSWORD,FECDB_ADDRESS,FECDB_PORT);
+  sprintf(DB_SERVER,"https://%s:%s@%s:%s",DB_USERNAME,DB_PASSWORD,DB_ADDRESS,DB_PORT);
+  sprintf(FECDB_SERVER,"https://%s:%s@%s:%s",FECDB_USERNAME,FECDB_PASSWORD,FECDB_ADDRESS,FECDB_PORT);
   fclose(config_file);
   lprintf("done reading config\n");
   return 0; 
