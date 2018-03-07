@@ -275,7 +275,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     // pass quick flag as setOnly if you want to speed this up
     // commented out for now so gtvalid measurement is forced
     if ((0x1<<testCounter) & testMask)
-          GTValidTest(crateMask,slotMasks,0xFFFFFFFF,410,0,0,1,0,0,1);
+          GTValidTest(crateMask,slotMasks,0xFFFFFFFF,410,0,0,1,1,0,1);
           //GTValidTest(crateMask,slotMasks,0xFFFFFFFF,410,0,quickFlag,1,0,0,1);
     testCounter++;
 

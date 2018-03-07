@@ -852,9 +852,6 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             if(LoadZDiscToDetectorDB(doc, i, j, id, detectorDB)){
               lprintf("Warning: Failure pushing zdisc info to detector DB for crate %d slot %d. \n", i, j);
             }
-            if(LoadGTValidsToDetectorDB(doc, i, j, id, detectorDB)){
-              lprintf("Warning: Faiure pushing gtvalid lengths to detector DB fro crate %d slot %d. \n", i, j);
-            }
           }
           else{
               // While uploading, print any failures
