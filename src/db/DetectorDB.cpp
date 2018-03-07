@@ -43,6 +43,24 @@ int CheckResultStatus(PGresult* qResult, PGconn* detectorDB){
   return 0;
 }
 
+// Function to turn float* [size] to string in order to push to detector DB
+void AppendStringFloatArray(float* array, char* buffer, int size){
+
+  char returnstring[512] = "'{";
+
+  for(int i= 0; i < size; i++){
+    if(i != (size-1)){
+      sprintf(returnstring + strlen(returnstring), "%f, ", array[i]);
+    }
+    else{
+      sprintf(returnstring + strlen(returnstring), "%f", array[i]);
+    }
+  }
+
+  sprintf(returnstring + strlen(returnstring), "}'");
+  strcpy(buffer, returnstring);
+}
+
 // Function to turn int* [size] to string in order to push to detector DB
 void AppendStringIntArray(int* array, char* buffer, int size){
 
@@ -135,6 +153,43 @@ int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID
 
   PQclear(qResult);
   lprintf("Successful pushed zdisc info to detector state database. \n");
+  return 0;
+}
+
+int LoadGTValidsToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB){
+
+  float gtvalid0[32];
+  float gtvalid1[32];
+  char str_gtvalid0[512];
+  char str_gtvalid1[512];
+
+  JsonNode *channels = json_find_member(doc, "channels");
+  for(int i = 0; i < 32; i++){
+    JsonNode* one_chan = json_find_element(channels, i);
+    gtvalid0[i] = (float)json_get_number(json_find_member(one_chan, "gtvalid0"));
+    gtvalid1[i] = (float)json_get_number(json_find_member(one_chan, "gtvalid1"));
+  }
+
+  AppendStringFloatArray(gtvalid0, str_gtvalid0, 32);
+  AppendStringFloatArray(gtvalid1, str_gtvalid1, 32);
+
+  char ecalid[64] = "";
+  sprintf(ecalid, "'%s'", ecalID);
+
+  char query[2048];
+  sprintf(query, "INSERT INTO gtvalid "
+                 "(crate, slot, gtvalid0_length, gtvalid1_length, ecalid) "
+                 "VALUES (%d, %d, %s, %s, %s) ",
+                  crate, slot, str_gtvalid0, str_gtvalid1, ecalid);
+
+  PGresult *qResult = PQexec(detectorDB, query);
+
+  if(CheckResultStatus(qResult, detectorDB)){
+    return 1;
+  }
+
+  PQclear(qResult);
+  lprintf("Successful pushed gtvalid lengths to detector state database. \n");
   return 0;
 }
 

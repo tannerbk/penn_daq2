@@ -829,7 +829,7 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             // Query channel status here
             if(chan_prob_array[nChannel] & (1<<zdisc_fail)){
               if(LoadBadDiscToDetectorDB(i, j, nChannel, detectorDB)){
-                lprintf("Warning Failure Loading Bad Disc to channeldb for crate %d slot %d channel %d \n", i, j, nChannel);
+                lprintf("Warning: Failure Loading Bad Disc to channeldb for crate %d slot %d channel %d \n", i, j, nChannel);
               }
               else{
                 lprintf("Updated bad_discriminator in channeldb for crate %d slot %d channel %d \n", i, j, nChannel);
@@ -847,10 +847,13 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
           if(didalltestsrun==0){
             PostFECDBDoc(i,j,doc);
             if(LoadFECDocToDetectorDB(doc, i, j, id, detectorDB)){
-              lprintf("Warning Failure pushing fecdoc info to detector DB for crate %d slot %d. \n", i, j);
+              lprintf("Warning: Failure pushing fecdoc info to detector DB for crate %d slot %d. \n", i, j);
             }
             if(LoadZDiscToDetectorDB(doc, i, j, id, detectorDB)){
-              lprintf("Warning Failure pushing zdisc info to detector DB for crate %d slot %d. \n", i, j);
+              lprintf("Warning: Failure pushing zdisc info to detector DB for crate %d slot %d. \n", i, j);
+            }
+            if(LoadGTValidsToDetectorDB(doc, i, j, id, detectorDB)){
+              lprintf("Warning: Faiure pushing gtvalid lengths to detector DB fro crate %d slot %d. \n", i, j);
             }
           }
           else{

@@ -1128,7 +1128,8 @@ void *ControllerLink::ProcessCommand(void *arg)
     if (GetFlag(input,'h')){
       lprintf("Usage: gtvalid_test -c [crate num (int)] "
           "-s [slot mask (hex)] -p [channel mask (hex)] "
-          "-g [gt cutoff] -t (use twiddle bits) -d (update database)\n");
+          "-g [gt cutoff] -t (use twiddle bits) -d (update database) "
+          "-z (update detector db) \n");
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
@@ -1138,6 +1139,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     float gtCutoff = GetFloat(input,'g',410);
     int twiddleOn = GetFlag(input,'t');
     int update = GetFlag(input,'d');
+    int detectorupdate = GetFlag(input,'z');
     int setOnly = GetFlag(input,'q');
     int busy = LockConnections(1,0x1<<crateNum);
     if (busy){
@@ -1147,7 +1149,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    GTValidTest((0x1)<<crateNum,slotMasks,channelMask,gtCutoff,twiddleOn,setOnly,update);
+    GTValidTest((0x1)<<crateNum,slotMasks,channelMask,gtCutoff,twiddleOn,setOnly,update,detectorupdate);
     UnlockConnections(1,0x1<<crateNum);
 
   }else if (strncmp(input,"mb_stability_test",17) == 0){
