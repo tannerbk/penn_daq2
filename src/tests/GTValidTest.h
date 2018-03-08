@@ -20,7 +20,7 @@
 
 void IsGTValidLonger(uint32_t crateMask, uint32_t *slotMasks, float time, uint16_t *islonger);
 float MeasureGTValid(int crateNum, int slotNum, int tac, float max_gtvalid, uint32_t max_isetm);
-int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, float gtCutoff, int twiddleOn, int setOnly, int updateDB, int finalTest=0, int ecal=0);
+int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, float gtCutoff, int twiddleOn, int setOnly, int updateDB, int updateDetectorDB, int finalTest=0, int ecal=0);
 
 #endif
 

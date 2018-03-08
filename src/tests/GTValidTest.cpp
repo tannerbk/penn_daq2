@@ -7,12 +7,15 @@
 #include "Globals.h"
 #include "Json.h"
 
+#include <libpq-fe.h>
+
 #include "DB.h"
+#include "DetectorDB.h"
 #include "XL3Model.h"
 #include "MTCModel.h"
 #include "GTValidTest.h"
 
-int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, float gtCutoff, int twiddleOn, int setOnly, int updateDB, int finalTest, int ecal)
+int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, float gtCutoff, int twiddleOn, int setOnly, int updateDB, int updateDetectorDB, int finalTest, int ecal)
 {
   lprintf("*** Starting GT Valid Test *************\n");
 
@@ -496,7 +499,7 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
             }
 
             //store in DB
-            if (updateDB){
+            if (updateDB || updateDetectorDB){
               lprintf("updating the database\n");
               JsonNode *newdoc = json_mkobject();
               json_append_member(newdoc,"type",json_mkstring("cmos_m_gtvalid"));
@@ -534,6 +537,14 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
 
               json_append_member(newdoc,"pass",json_mkbool(!(slot_errors)));
               json_append_member(newdoc,"slot_errors",json_mknumber(slot_errors));
+              if (updateDetectorDB){
+                lprintf("Pushing gtvalid information to detectorDB\n");
+                PGconn* detectorDB = ConnectToDetectorDB();
+                int error = LoadGTValidsToDetectorDB(newdoc, crateNum, i, "", detectorDB);
+                if(error){
+                  lprintf("Warning: Failure pushing gtvalid lengths to detectorDB for crate %d slot %d \n", crateNum, i);
+                }
+              }
               if (finalTest)
                 json_append_member(newdoc,"final_test_id",json_mkstring(finalTestIDs[crateNum][i]));
               if (ecal)
