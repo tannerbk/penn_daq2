@@ -855,7 +855,7 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
           }
           else{
               // While uploading, print any failures
-              lprintf("WARNING: A test did not run for crate %d slot %d, not posting a FEC doc for that crate/slot.\n",i,j);
+              lprintf("Warning: A test did not run for crate %d slot %d, not posting a FEC doc for that crate/slot.\n",i,j);
           }
 
           json_delete(doc); // only delete the head node

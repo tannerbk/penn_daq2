@@ -542,7 +542,7 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
                 PGconn* detectorDB = ConnectToDetectorDB();
                 int error = LoadGTValidsToDetectorDB(newdoc, crateNum, i, "", detectorDB);
                 if(error){
-                  lprintf("Warning: Failure pushing gtvalid lengths to detectorDB for crate %d slot %d", crateNum, i);
+                  lprintf("Warning: Failure pushing gtvalid lengths to detectorDB for crate %d slot %d \n", crateNum, i);
                 }
               }
               if (finalTest)
