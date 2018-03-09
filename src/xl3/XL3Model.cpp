@@ -366,7 +366,7 @@ int XL3Model::SetupChargeInjection(uint32_t slotMask, uint32_t chanMask, uint32_
 {
   XL3Packet packet;
   packet.header.packetType = MULTI_SETUP_CHARGE_INJ_ID;
-  MultiSetUpChargeInjArgs *args = (MultiSetUpChargeInjArgs *) p.payload;
+  MultiSetUpChargeInjArgs *args = (MultiSetUpChargeInjArgs *) packet.payload;
   args->slotMask = slotMask;
   // Same channel mask and DAC value get used for all slots in the slot mask
   for(int i = 0; i < 16; i++){
@@ -375,7 +375,7 @@ int XL3Model::SetupChargeInjection(uint32_t slotMask, uint32_t chanMask, uint32_
       args->dacValues[i] = dacValue;
     }
   }
-  SwapLongBlock(args,sizeof(MultiSetupChargeInjArgs)/sizeof(int32_t));
+  SwapLongBlock(args,sizeof(MultiSetUpChargeInjArgs)/sizeof(int32_t));
   SendCommand(&packet);
   return 0;
 }
