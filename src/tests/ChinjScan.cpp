@@ -12,7 +12,7 @@
 #include "MTCModel.h"
 #include "ChinjScan.h"
 
-int ChinjScan(int crateNum, uint32_t slotMask, uint32_t channelMask, float frequency, int gtDelay, int pedWidth, int numPedestals, float upper, float lower, float pmt, int pedOn, int quickOn, int updateDB, int finalTest)
+int ChinjScan(int crateNum, uint32_t slotMask, uint32_t channelMask, float frequency, int gtDelay, int pedWidth, int numPedestals, float upper, float lower, int pedOn, int quickOn, int updateDB, int finalTest)
 {
   lprintf("*** Starting Charge Injection Test *****\n");
 
@@ -282,25 +282,25 @@ int ChinjScan(int crateNum, uint32_t slotMask, uint32_t channelMask, float frequ
                   ped[i].thiscell[j].qhlbar > upper) {
                 chinj_err[slot_iter]++;
                 if (j%2 == 0)
-                  scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2]++;
+                  scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2] |= 0x1;
                 else
-                  scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2+1]++;
+                  scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2+1] |= 0x1;
               }
               if (ped[i].thiscell[j].qhsbar < lower ||
                   ped[i].thiscell[j].qhsbar > upper) {
                 chinj_err[slot_iter]++;
                 if (j%2 == 0)
-                  scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2]++;
+                  scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2] |= 0x2;
                 else
-                  scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2+1]++;
+                  scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2+1] |= 0x2;
               }
               if (ped[i].thiscell[j].qlxbar < lower ||
                   ped[i].thiscell[j].qlxbar > upper) {
                 chinj_err[slot_iter]++;
                 if (j%2 == 0)
-                  scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2]++;
+                  scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2] |= 0x4;
                 else
-                  scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2+1]++;
+                  scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2+1] |= 0x4;
               }
               if (j==0){
                 lprintf("%2d %3d %4d %6.1f %4.1f %6.1f %4.1f %6.1f %4.1f %6.1f %4.1f\n",
@@ -310,8 +310,7 @@ int ChinjScan(int crateNum, uint32_t slotMask, uint32_t channelMask, float frequ
                     ped[i].thiscell[j].qlxbar, ped[i].thiscell[j].qlxrms,
                     ped[i].thiscell[j].tacbar, ped[i].thiscell[j].tacrms);
               }
-              if(j ==1){
-              //if(j==0 || j ==1){
+              if(j ==0){
                 if (dacvalue == 0){
                   pedestal_qhl[i] = ped[i].thiscell[j].qhlbar;
                   pedestal_qhs[i] = ped[i].thiscell[j].qhsbar;
@@ -322,11 +321,10 @@ int ChinjScan(int crateNum, uint32_t slotMask, uint32_t channelMask, float frequ
                   float qhl_difference = abs(ped[i].thiscell[j].qhlbar - pedestal_qhl[i]);
                   float qhs_difference = abs(ped[i].thiscell[j].qhsbar - pedestal_qhs[i]);
                   float qlx_difference = abs(ped[i].thiscell[j].qlxbar - pedestal_qlx[i]);
-                  //if(qhl_difference < pmt){
                   if(qhl_difference < 100 && qhs_difference < 100 && qlx_difference > 10){
                     chinj_err[slot_iter]++;
-                    scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2]++;
-                    scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2+1]++;
+                    scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2] |= 0x8;
+                    scan_errors[dac_iter*16*32*2+slot_iter*32*2+i*2+1] |= 0x8;
                     lprintf("Probably missing pmt input channel %d\n", i);
                   }
                 }
