@@ -364,39 +364,19 @@ int XL3Model::SetCratePedestals(uint16_t slotMask, uint32_t pattern)
 
 int XL3Model::SetupChargeInjection(uint32_t slotMask, uint32_t chanMask, uint32_t dacValue)
 {
-  uint32_t amask,word;
-  uint32_t selectReg;
-  uint32_t result;
-  int error;
-
-  amask = chanMask;
-
-  for (int slot_iter=0;slot_iter<16;slot_iter++){
-    if ((0x1<<slot_iter) & slotMask){
-      selectReg = FEC_SEL*slot_iter;
-      for (int bit_iter = HV_BIT_COUNT;bit_iter>0;bit_iter--){
-        if (bit_iter > 32){
-          word = 0x0;
-        }else{
-          // set bit iff it is set in amask
-          word = ((0x1 << (bit_iter -1)) & amask) ? HV_CSR_DATIN : 0x0;
-        }
-        RW(FEC_HV_CSR_R + selectReg + WRITE_REG,word,&result);
-        word |= HV_CSR_CLK;
-        RW(FEC_HV_CSR_R + selectReg + WRITE_REG,word,&result);
-      } // end loop over bits
-
-      // now toggle HVLOAD
-      RW(FEC_HV_CSR_R + selectReg + WRITE_REG,0x0,&result);
-      RW(FEC_HV_CSR_R + selectReg + WRITE_REG,HV_CSR_LOAD,&result);
-      // now set the dac
-      error = LoadsDac(d_hvref,dacValue,slot_iter);
-      if (error){
-        lprintf("setup_chinj: error loading charge injection dac\n");
-      }
-    } // end if slot_mask
-  } // end loop over slots
-  DeselectFECs();
+  XL3Packet packet;
+  packet.header.packetType = MULTI_SETUP_CHARGE_INJ_ID;
+  MultiSetUpChargeInjArgs *args = (MultiSetUpChargeInjArgs *) packet.payload;
+  args->slotMask = slotMask;
+  // Same channel mask and DAC value get used for all slots in the slot mask
+  for(int i = 0; i < 16; i++){
+    if((0x1<<i) & slotMask){
+      args->channelMasks[i] = chanMask;
+      args->dacValues[i] = dacValue;
+    }
+  }
+  SwapLongBlock(args,sizeof(MultiSetUpChargeInjArgs)/sizeof(int32_t));
+  SendCommand(&packet);
   return 0;
 }
 

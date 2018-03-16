@@ -190,7 +190,7 @@ int FinalTest(int crateNum, uint32_t slotMask, uint32_t testMask, int skip)
   testCounter++;
 
   if ((0x1<<testCounter) & testMask)
-    ChinjScan(crateNum,slotMask,0xFFFFFFFF,0,DEFAULT_GT_DELAY,DEFAULT_PED_WIDTH,10,5000,400,0,1,updateDB,1);
+    ChinjScan(crateNum,slotMask,0xFFFFFFFF,0,DEFAULT_GT_DELAY,DEFAULT_PED_WIDTH,10,5000,400,1,1,updateDB,1);
   testCounter++;
   if ((0x1<<testCounter) & testMask)
     SetTTot(crateNum,slotMask,400,updateDB,1);
