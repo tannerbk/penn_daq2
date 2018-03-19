@@ -818,9 +818,13 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             }
             // Make sure to get error flags for the non-critical test
             for(int ttype=0; ttype<nntests; ttype++){
-              if(strcmp(testtype, test_map_ncrit[ttype])==0){
-                printf("non-critical test type %s \n", test_map_ncrit[ttype]);
-                AddECALTestResults(doc,test_doc,chan_prob_array);
+              int crate = json_get_number(json_find_member(config,"crate_id"));
+              int slot = json_get_number(json_find_member(config,"slot"));
+              if(crate == i && slot == j){
+                if(strcmp(testtype, test_map_ncrit[ttype])==0){
+                  printf("non-critical test type %s \n", test_map_ncrit[ttype]);
+                  AddECALTestResults(doc,test_doc,chan_prob_array);
+                }
               }
             }
           }

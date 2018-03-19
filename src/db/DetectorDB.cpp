@@ -112,7 +112,7 @@ int LoadBadDiscToDetectorDB(int crate, int slot, int channel, PGconn* detectorDB
   char reason[32] = "zdisc failed";
 
   sprintf(query, "UPDATE channel_status "
-    "SET bad_discriminator=%s, name='%s', reason='%s' "
+    "SET bad_discriminator=%s, name='%s', info='%s' "
     "WHERE crate=%d AND slot=%d AND channel=%d AND "
     "timestamp = (SELECT max(timestamp) FROM channel_status "
     "WHERE crate=%d AND slot = %d AND channel = %d)", status,
