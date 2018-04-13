@@ -32,6 +32,7 @@
 #define CONFIG_FILE_LOC "config/local"
 #define CONFIG_FILE_DEFAULT_LOC "config/default"
 
+extern char *xmalloc PARAMS((size_t));
 extern char *getwd ();
 int sockfd, numbytes;
 pid_t pid;
@@ -44,7 +45,7 @@ char CONT_CMD_BSY[100];
 
 typedef struct {
     char *name;			/* User printable name of the function. */
-    Function *func;		/* Function to call to do the job. */
+    rl_icpfunc_t *func;		/* Function to call to do the job. */
     char *doc;			/* Documentation for this function.  */
 } COMMAND;
 
@@ -55,89 +56,89 @@ int com_help();
 COMMAND commands[] = {
     //{ "help", com_help, (char *)NULL },
     //_!_begin_commands_!_
-    { "exit", (Function *)NULL, (char *)NULL },
-    { "xl3_rw", (Function *)NULL, (char *)NULL },
-    { "crate_init", (Function *)NULL, (char *)NULL },
-    { "xr", (Function *)NULL, (char *)NULL },
-    { "xw", (Function *)NULL, (char *)NULL },
-    { "xl3_queue_rw", (Function *)NULL, (char *)NULL },
-    { "sm_reset", (Function *)NULL, (char *)NULL },
-    { "debugging_on", (Function *)NULL, (char *)NULL },
-    { "debugging_off", (Function *)NULL, (char *)NULL },
-    { "change_mode", (Function *)NULL, (char *)NULL },
-    { "set_relays", (Function *)NULL, (char *)NULL },
-    { "get_relays", (Function *)NULL, (char *)NULL },
-    { "check_xl3_status", (Function *)NULL, (char *)NULL },
-    { "read_local_voltage", (Function *)NULL, (char *)NULL },
-    { "hv_readback", (Function *)NULL, (char *)NULL },
-    { "set_alarm_level", (Function *)NULL, (char *)NULL },
-    { "set_alarm_dac", (Function *)NULL, (char *)NULL },
-    { "fr", (Function *)NULL, (char *)NULL },
-    { "fw", (Function *)NULL, (char *)NULL },
-    { "load_relays", (Function *)NULL, (char *)NULL },
-    { "read_bundle", (Function *)NULL, (char *)NULL },
-    { "setup_chinj", (Function *)NULL, (char *)NULL },
-    { "load_dac", (Function *)NULL, (char *)NULL },
-    { "sbc_control", (Function *)NULL, (char *)NULL },
-    { "mtc_init", (Function *)NULL, (char *)NULL },
-    { "mr", (Function *)NULL, (char *)NULL },
-    { "mw", (Function *)NULL, (char *)NULL },
-    { "mtc_read", (Function *)NULL, (char *)NULL },
-    { "mtc_write", (Function *)NULL, (char *)NULL },
-    { "mtc_delay", (Function *)NULL, (char *)NULL },
-    { "set_mtca_thresholds", (Function *)NULL, (char *)NULL },
-    { "set_gt_mask", (Function *)NULL, (char *)NULL },
-    { "set_gt_crate_mask", (Function *)NULL, (char *)NULL },
-    { "set_ped_crate_mask", (Function *)NULL, (char *)NULL },
-    { "enable_pulser", (Function *)NULL, (char *)NULL },
-    { "disable_pulser", (Function *)NULL, (char *)NULL },
-    { "enable_pedestal", (Function *)NULL, (char *)NULL },
-    { "disable_pedestal", (Function *)NULL, (char *)NULL },
-    { "set_pulser_freq", (Function *)NULL, (char *)NULL },
-    { "send_softgt", (Function *)NULL, (char *)NULL },
-    { "multi_softgt", (Function *)NULL, (char *)NULL },
-    { "board_id", (Function *)NULL, (char *)NULL },
-    { "cald_test", (Function *)NULL, (char *)NULL },
-    { "cgt_test", (Function *)NULL, (char *)NULL },
-    { "chinj_scan", (Function *)NULL, (char *)NULL },
-    { "crate_cbal", (Function *)NULL, (char *)NULL },
-    { "disc_check", (Function *)NULL, (char *)NULL },
-    { "fec_test", (Function *)NULL, (char *)NULL },
-    { "fifo_test", (Function *)NULL, (char *)NULL },
-    { "gtvalid_test", (Function *)NULL, (char *)NULL },
-    { "mb_stability_test", (Function *)NULL, (char *)NULL },
-    { "mem_test", (Function *)NULL, (char *)NULL },
-    { "ped_run", (Function *)NULL, (char *)NULL },
-    { "see_refl", (Function *)NULL, (char *)NULL },
-    { "esum_see_refl", (Function *)NULL, (char *)NULL },
-    { "trigger_scan", (Function *)NULL, (char *)NULL },
-    { "get_ttot", (Function *)NULL, (char *)NULL },
-    { "set_ttot", (Function *)NULL, (char *)NULL },
-    { "vmon", (Function *)NULL, (char *)NULL },
-    { "local_vmon", (Function *)NULL, (char *)NULL },
-    { "zdisc", (Function *)NULL, (char *)NULL },
-    { "run_pedestals_end", (Function *)NULL, (char *)NULL },
-    { "run_pedestals_end_mtc", (Function *)NULL, (char *)NULL },
-    { "run_pedestals_end_crate", (Function *)NULL, (char *)NULL },
-    { "run_pedestals", (Function *)NULL, (char *)NULL },
-    { "run_pedestals_mtc", (Function *)NULL, (char *)NULL },
-    { "run_pedestals_crate", (Function *)NULL, (char *)NULL },
-    { "final_test", (Function *)NULL, (char *)NULL },
-    { "ecal", (Function *)NULL, (char *)NULL },
-    { "create_fec_docs", (Function *)NULL, (char *)NULL },
-    { "find_noise", (Function *)NULL, (char *)NULL },
-    { "dac_sweep", (Function *)NULL, (char *)NULL },
-    { "check_recv_queues", (Function *)NULL, (char *)NULL },
-    { "run_macro", (Function *)NULL, (char *)NULL },
-    { "reset_speed", (Function *)NULL, (char *)NULL },
-    { "help", (Function *)NULL, (char *)NULL },
-    { "clear_screen", (Function *)NULL, (char *)NULL },
-    { "start_logging", (Function *)NULL, (char *)NULL },
-    { "stop_logging", (Function *)NULL, (char *)NULL },
-    { "print_connected", (Function *)NULL, (char *)NULL },
-    { "set_ecal_bit", (Function *)NULL, (char *)NULL },
+    { "exit", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "xl3_rw", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "crate_init", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "xr", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "xw", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "xl3_queue_rw", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "sm_reset", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "debugging_on", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "debugging_off", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "change_mode", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "set_relays", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "get_relays", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "check_xl3_status", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "read_local_voltage", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "hv_readback", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "set_alarm_level", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "set_alarm_dac", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "fr", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "fw", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "load_relays", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "read_bundle", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "setup_chinj", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "load_dac", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "sbc_control", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "mtc_init", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "mr", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "mw", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "mtc_read", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "mtc_write", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "mtc_delay", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "set_mtca_thresholds", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "set_gt_mask", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "set_gt_crate_mask", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "set_ped_crate_mask", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "enable_pulser", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "disable_pulser", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "enable_pedestal", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "disable_pedestal", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "set_pulser_freq", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "send_softgt", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "multi_softgt", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "board_id", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "cald_test", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "cgt_test", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "chinj_scan", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "crate_cbal", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "disc_check", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "fec_test", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "fifo_test", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "gtvalid_test", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "mb_stability_test", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "mem_test", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "ped_run", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "see_refl", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "esum_see_refl", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "trigger_scan", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "get_ttot", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "set_ttot", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "vmon", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "local_vmon", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "zdisc", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "run_pedestals_end", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "run_pedestals_end_mtc", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "run_pedestals_end_crate", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "run_pedestals", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "run_pedestals_mtc", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "run_pedestals_crate", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "final_test", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "ecal", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "create_fec_docs", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "find_noise", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "dac_sweep", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "check_recv_queues", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "run_macro", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "reset_speed", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "help", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "clear_screen", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "start_logging", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "stop_logging", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "print_connected", (rl_icpfunc_t *)NULL, (char *)NULL },
+    { "set_ecal_bit", (rl_icpfunc_t *)NULL, (char *)NULL },
     //_!_end_commands_!_
-    { (char *)NULL, (Function *)NULL, (char*)NULL }
+    { (char *)NULL, (rl_icpfunc_t *)NULL, (char*)NULL }
 };
 
 int read_configuration_file()
@@ -197,7 +198,7 @@ void *get_in_addr(struct sockaddr *sa)
 
   return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
-void * xmalloc (int size)
+/*void * xmalloc (int size)
 {
   void *buf;
 
@@ -208,7 +209,7 @@ void * xmalloc (int size)
   }
 
   return buf;
-}
+}*/
 
 char *dupstr(char* s){
   char *r;
@@ -251,7 +252,8 @@ int execute_line(char *line){
   }
   word = line + i;
   /* Call the function. */
-  return ( (*(command->func))(word, 0) );
+  //return ( (*(command->func))(word, 0) );
+  return ( (*(command->func))(word));
 }
 
 /* Strip isspace from the start and end of STRING.  Return a pointer
@@ -286,7 +288,9 @@ initialize_readline ()
   /* Allow conditional parsing of the ~/.inputrc file. */
   rl_readline_name = "FileMan";
   /* Tell the completer that we want a crack first. */
-  rl_attempted_completion_function = (CPPFunction *)fileman_completion;
+  //rl_attempted_completion_function = (CPPFunction *)fileman_completion;
+  //rl_attempted_completion_function = (rl_completion_func_t *)fileman_completion;
+  rl_attempted_completion_function = fileman_completion;
 }
 
 /* Attempt to complete on the contents of TEXT.  START and END show the
