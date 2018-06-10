@@ -256,13 +256,18 @@ int CrateCBal(int crateNum, uint32_t slotMask, uint32_t channelMask, int updateD
               if (iterations++ > max_iterations){
                 lprintf("Too many interations, exiting with some channels unbalanced.\n");
                 //lprintf("Making best guess for unbalanced channels\n");
-                for (int j=0;j<32;j++)
+                for (int j=0;j<32;j++){
                   if (wg == 0){
-                    if (chan_param[j].hi_balanced == 0)
-                      chan_param[j].high_gain_balance == bestguess_bal[j];
-                  }else              
-                    if (chan_param[j].low_balanced == 0)
-                      chan_param[j].low_gain_balance == bestguess_bal[j];
+                    if (chan_param[j].hi_balanced == 0){
+                      chan_param[j].high_gain_balance = bestguess_bal[j];
+                    }
+                  }
+                  else{
+                    if (chan_param[j].low_balanced == 0){
+                      chan_param[j].low_gain_balance = bestguess_bal[j];
+                    }
+                  }
+                }
                 break;
               }
 
@@ -390,7 +395,7 @@ int CrateCBal(int crateNum, uint32_t slotMask, uint32_t channelMask, int updateD
                     }
 
                     // keep track of best guess
-                    if (fabs(f1[j] < fabs(f2[j])))
+                    if (fabs(f1[j]) < fabs(f2[j]))
                       bestguess_bal[j] = x1_bal[j];
                     else
                       bestguess_bal[j] = x2_bal[j];
