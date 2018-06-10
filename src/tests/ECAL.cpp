@@ -154,7 +154,18 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
   // Print the crate and slot masks
   for (int i=0;i<MAX_XL3_CON;i++){
     if ((0x1<<i) & crateMask){
-      lprintf("crate %d: 0x%04x\n",i,slotMasks[i]);
+      if (slotMasks[i] == 0xFFFF){
+        lprintf("crate %d, slots 0-15\n",i);
+      }
+      else{
+        lprintf("crate %d, slots ");
+        for(int j=0; j<16; j++){
+          if((0x1<<j) & slotMasks[i]){
+            lprintf("%d ", j);
+          }
+        }
+        lprintf("\n");
+      }
     }
   }
 
@@ -264,7 +275,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     if ((0x1<<testCounter) & testMask)
       for (int i=0;i<MAX_XL3_CON;i++)
         if ((0x1<<i) & crateMask)
-          DiscCheck(i,slotMasks[i],500000,1,0,1);
+          DiscCheck(i,slotMasks[i],100000,1,0,1);
     testCounter++;
 
     MTCInit(1);
