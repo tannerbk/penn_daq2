@@ -134,9 +134,10 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     }
     for (int i=0;i<11;i++){
       if ((0x1<<i) & testMask){
-        lprintf("%s \n",testList[i]);
+        lprintf("%s ",testList[i]);
       }
     }
+    lprintf("\n");
   }
   else if (!quickFlag){
     lprintf("None.\n");
@@ -158,7 +159,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
         lprintf("crate %d, slots 0-15\n",i);
       }
       else{
-        lprintf("crate %d, slots ");
+        lprintf("crate %d, slots ", i);
         for(int j=0; j<16; j++){
           if((0x1<<j) & slotMasks[i]){
             lprintf("%d ", j);
