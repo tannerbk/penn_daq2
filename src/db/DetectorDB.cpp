@@ -193,7 +193,7 @@ int LoadGTValidsToDetectorDB(JsonNode* doc, int crate, int slot, const char* eca
   return 0;
 }
 
-int LoadChannelStatusToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGConn* detectorDB){
+int LoadChannelStatusToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB){
 
   char str_dbid[512];
   char str_problems[512];
@@ -211,8 +211,8 @@ int LoadChannelStatusToDetectorDB(JsonNode* doc, int crate, int slot, const char
   JsonNode* channel = json_find_member(doc, "channel");
 
   // Get list of penn daq tests that failed for each channel
-  JsonNode* problems = json_find_memeber(channel, "problem");
-  AppendStringArray(problem, str_problem, 32);
+  JsonNode* problems = json_find_member(channel, "problem");
+  AppendStringArray(problems, str_problems, 32);
 
   char ecalid[64] = "";
   sprintf(ecalid, "'%s'", ecalID);
@@ -221,7 +221,7 @@ int LoadChannelStatusToDetectorDB(JsonNode* doc, int crate, int slot, const char
   char query[buffer];
   int size = snprintf(query, buffer, "INSERT INTO test_status "
                   "(ecalid, crate, slot, mbid, dbid, problems) "
-                  "VALUES (%s, %d, %d, %d, %s, %s)"
+                  "VALUES (%s, %d, %d, %d, %s, %s)",
                    ecalid, crate, slot, mbid, str_dbid, str_problems); 
 
   if(size >= buffer){

@@ -18,7 +18,7 @@ int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID
 int LoadGTValidsToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB);
 
 // Load channel problems to the detector database
-int LoadChannelStatusToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGConn* detectorDB);
+int LoadChannelStatusToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB);
 
 // Load FEC Documents to the detector database
 int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB);

@@ -20,7 +20,7 @@ static const char test_map[ntests][20] = {
     "crate_cbal","zdisc","set_ttot","cmos_m_gtvalid","find_noise_2"};
 
 // A couple non-critical test that are useful to keep track of errors for
-const static int nntests = 3;
+const static int nntests = 5;
 static const char test_map_ncrit[nntests][20] = 
     {"ped_run", "cgt_test", "get_ttot", "fec_test", "disc_check"};
 
