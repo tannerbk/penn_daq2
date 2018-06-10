@@ -44,8 +44,8 @@ class MTCModel{
     MTCModel();
     ~MTCModel();
 
-    int CloseConnection(){fLink->CloseConnection();};
-    int Connect(){fLink->Connect();};
+    void CloseConnection(){fLink->CloseConnection();};
+    void Connect(){fLink->Connect();};
     int IsConnected(){return fLink->IsConnected();};
     int RegRead(uint32_t address, uint32_t *data);
     int RegWrite(uint32_t address, uint32_t data);

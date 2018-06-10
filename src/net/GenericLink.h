@@ -35,7 +35,7 @@ class GenericLink{
 
     int IsConnected(){return fConnected;};
     int IsLocked(){return fLock;};
-    int SetLock(int lock){fLock = lock;};
+    void SetLock(int lock){fLock = lock;};
 
   protected:
     int fLock;

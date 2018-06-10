@@ -9,8 +9,8 @@ class TUBIIModel{
     TUBIIModel();
     ~TUBIIModel();
 
-    int CloseConnection(){fLink->CloseConnection();};
-    int Connect(){fLink->Connect();};
+    void CloseConnection(){fLink->CloseConnection();};
+    void Connect(){fLink->Connect();};
     int IsConnected(){return fLink->IsConnected();};
     int SendCommand(SBCPacket *packet, int withResponse = 1, int timeout = 5);
 
