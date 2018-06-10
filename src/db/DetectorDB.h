@@ -17,8 +17,8 @@ int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID
 // Load measured GT valid lengths to detector database
 int LoadGTValidsToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB);
 
-// Load channel problems to the detector database
-int LoadChannelStatusToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB);
+// Load channel problems to the detector database, which keeps track of which ECAL tests failed
+int LoadChannelProblemsToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB);
 
 // Load FEC Documents to the detector database
 int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB);

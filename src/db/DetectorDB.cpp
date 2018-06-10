@@ -193,7 +193,7 @@ int LoadGTValidsToDetectorDB(JsonNode* doc, int crate, int slot, const char* eca
   return 0;
 }
 
-int LoadChannelStatusToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB){
+int LoadChannelProblemsToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB){
 
   char str_dbid[512];
   char str_problems[512];
