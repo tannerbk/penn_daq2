@@ -455,7 +455,7 @@ int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc, unsigned int* chan
   else if (strcmp(type, "fec_test") == 0){
     JsonNode *channels = json_find_member(test_doc,"cmos_test_reg");
     for (i=0;i<32;i++){
-      if (json_get_bool(json_find_element(channels,i))){
+      if(!(json_get_bool(json_find_element(channels,i)))){
         chan_prob_array[i] |= (1<<fec_test_fail);
       }
     }
