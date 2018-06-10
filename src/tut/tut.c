@@ -26,7 +26,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <time.h>
-
+#include <ctype.h>
 
 #define MAXDATASIZE 1440 // max number of bytes we can get at once 
 #define CONFIG_FILE_LOC "config/local"
@@ -233,7 +233,7 @@ int execute_line(char *line){
   char *word;
   /* Isolate the command word. */
   i = 0;
-  while (line[i] && isspace(line[i]) )
+  while (line[i] && isspace (line[i]) )
     i++;
   word = line + i;
   while (line[i] && !isspace (line[i]))
@@ -281,7 +281,7 @@ char **fileman_completion ();
 /* Tell the GNU Readline library how to complete.  We want to try to complete
    on command names if this is the first word in the line, or on filenames
    if not. */
-initialize_readline ()
+void initialize_readline ()
 {
   /* Allow conditional parsing of the ~/.inputrc file. */
   rl_readline_name = "FileMan";
@@ -319,7 +319,7 @@ char *command_generator(char *text, int state){
     len = strlen (text);
   }
   /* Return the next name which partially matches from the command list. */
-  while (name = commands[list_index].name)
+  while ((name = commands[list_index].name))
   {
     list_index++;
     if (strncmp (name, text, len) == 0)
