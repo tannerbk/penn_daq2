@@ -875,6 +875,7 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             }
             if(LoadChannelStatusToDetectorDB(doc, crate, slot, ecalID, detectorDB)){
               lprintf("Warning: Failure pushing channel status info to detector DB for crate %d slot %d. \n");
+            }
           }
           else{
               // While uploading, print any failures
