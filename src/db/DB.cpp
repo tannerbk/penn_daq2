@@ -378,8 +378,8 @@ int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc, unsigned int* chan
      }
      json_append_element(rmp,json_mknumber(json_get_number(json_find_member(one_chip,"rmp"))));
      json_append_element(vsi,json_mknumber(json_get_number(json_find_member(one_chip,"vsi"))));
-     json_append_element(rmpup,json_mknumber(115)); //FIXME -- Not used
-     json_append_element(vli,json_mknumber(120)); //FIXME -- Not used
+     json_append_element(rmpup,json_mknumber(115)); // Not used
+     json_append_element(vli,json_mknumber(120)); // Not used
    }
    json_append_member(tdisc,"rmp",rmp);
    json_append_member(tdisc,"rmpup",rmpup);
@@ -452,7 +452,24 @@ int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc, unsigned int* chan
       }
     }
   }
-  // TODO -- could add FEC test, disc check here
+  else if (strcmp(type, "fec_test") == 0){
+    JsonNode *channels = json_find_member(test_doc,"cmos_test_reg");
+    for (i=0;i<32;i++){
+      if(!(json_get_bool(json_find_element(channels,i)))){
+        chan_prob_array[i] |= (1<<fec_test_fail);
+      }
+    }
+  }
+  else if (strcmp(type, "disc_check") == 0){
+    JsonNode *channels = json_find_member(test_doc,"channels");
+    for (i=0;i<32;i++){
+      JsonNode *onechan = json_find_element(channels,i);
+      int chan_num = (int) json_get_number(json_find_member(onechan,"id"));
+      if ((int) json_get_number(json_find_member(onechan,"errors")) == 1){
+        chan_prob_array[i] |= (1<<disc_check_fail);
+      }
+    }
+  }
 
   JsonNode *new_channel = json_mkobject();
   JsonNode *new_chan_problems = json_mkarray();
@@ -855,6 +872,9 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             }
             if(LoadZDiscToDetectorDB(doc, i, j, id, detectorDB)){
               lprintf("Warning: Failure pushing zdisc info to detector DB for crate %d slot %d. \n", i, j);
+            }
+            if(LoadChannelProblemsToDetectorDB(doc, i, j, id, detectorDB)){
+              lprintf("Warning: Failure pushing channel problems info to detector DB for crate %d slot %d. \n", i, j);
             }
           }
           else{

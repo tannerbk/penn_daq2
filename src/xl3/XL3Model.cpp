@@ -261,7 +261,7 @@ int XL3Model::MultiLoadsDac(int numDacs, uint32_t *dacNums, uint32_t *dacValues,
     if (j>=50) break;
     args->dacs[j].slotNum = slotNums[j];
     args->dacs[j].dacNum = dacNums[j];
-    args->dacs[j].dacValue = (dacValues[j] < 256 && dacValues[j] >= 0) ? dacValues[j] : 255;
+    args->dacs[j].dacValue = (dacValues[j] < 256) ? dacValues[j] : 255;
   }
   SwapLongBlock(args,numDacs*3+1);
   SendCommand(&packet);

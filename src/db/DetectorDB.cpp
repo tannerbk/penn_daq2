@@ -193,6 +193,56 @@ int LoadGTValidsToDetectorDB(JsonNode* doc, int crate, int slot, const char* eca
   return 0;
 }
 
+int LoadChannelProblemsToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB){
+
+  char str_dbid[512];
+  char str_problems[512];
+  int dbid[4];
+
+  // IDs
+  int mbid =  (int)strtoul(json_get_string(json_find_member(doc,"board_id")), (char**) NULL, 16);
+  JsonNode* id = json_find_member(doc, "id"); 
+  dbid[0] = (int)strtoul(json_get_string(json_find_member(id,"db0")), (char**) NULL, 16);
+  dbid[1] = (int)strtoul(json_get_string(json_find_member(id,"db1")), (char**) NULL, 16);
+  dbid[2] = (int)strtoul(json_get_string(json_find_member(id,"db2")), (char**) NULL, 16);
+  dbid[3] = (int)strtoul(json_get_string(json_find_member(id,"db3")), (char**) NULL, 16);
+  AppendStringIntArray(dbid, str_dbid, 4);
+
+  JsonNode* channel = json_find_member(doc, "channel");
+
+  // Get list of penn daq tests that failed for each channel
+  JsonNode* problems = json_find_member(channel, "problem");
+  AppendStringArray(problems, str_problems, 32);
+
+  char ecalid[64] = "";
+  sprintf(ecalid, "'%s'", ecalID);
+
+  const int buffer = 2048;
+  char query[buffer];
+  int size = snprintf(query, buffer, "INSERT INTO test_status "
+                  "(ecalid, crate, slot, mbid, dbid, problems) "
+                  "VALUES (%s, %d, %d, %d, %s, %s)",
+                   ecalid, crate, slot, mbid, str_dbid, str_problems); 
+
+  if(size >= buffer){
+    lprintf("ChannelStatus SQL query buffer overflow for crate %d, slot %d.\n", crate, slot);
+    return 1;
+  }
+
+  PGresult *qResult = PQexec(detectorDB, query);
+
+  if(CheckResultStatus(qResult, detectorDB)){
+    return 1;
+  }
+
+  PQclear(qResult);
+  lprintf("Successful pushed channel problems info to detector state database. \n");
+
+  return 0;
+  
+  
+}
+
 int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB){
 
   char str_dbid[512];
@@ -285,7 +335,7 @@ int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalI
                    str_tr100delay, str_tr20delay, str_tr20width);
 
   if(size >= buffer){
-    lprintf("FECDOC SQL query buffer overflow for crate %d, slot %d.\n", crate, slot);
+    lprintf("FecDoc SQL query buffer overflow for crate %d, slot %d.\n", crate, slot);
     return 1;
   }
 
@@ -296,7 +346,7 @@ int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalI
   }
 
   PQclear(qResult);
-  lprintf("Successful pushed fecdoc info to detector state database. \n");
+  lprintf("Successful pushed FecDoc info to detector state database. \n");
 
   return 0;
 }
