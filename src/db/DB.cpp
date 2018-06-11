@@ -873,7 +873,7 @@ int GenerateFECDocFromECAL(uint32_t crateMask, uint32_t *slotMasks, const char* 
             if(LoadZDiscToDetectorDB(doc, i, j, id, detectorDB)){
               lprintf("Warning: Failure pushing zdisc info to detector DB for crate %d slot %d. \n", i, j);
             }
-            if(LoadChannelProblemsToDetectorDB(doc, i, j, ecalID, detectorDB)){
+            if(LoadChannelProblemsToDetectorDB(doc, i, j, id, detectorDB)){
               lprintf("Warning: Failure pushing channel problems info to detector DB for crate %d slot %d. \n", i, j);
             }
           }
