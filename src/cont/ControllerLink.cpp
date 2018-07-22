@@ -1222,19 +1222,22 @@ void *ControllerLink::ProcessCommand(void *arg)
     PedRun(crateNum,slotMask,channelMask,frequency,gtDelay,pedWidth,numPeds,upper,lower,update);
     UnlockConnections(1,0x1<<crateNum);
 
-  }else if (strncmp(input,"ped_run_by_channel",18) == 0){
+  }else if (strncmp(input,"all_ped_by_channel",18) == 0){
     if (GetFlag(input,'h')){
-      lprintf("Usage: ped_run -c [crate num (int)] "
-          "-s [slot num (int)] -p [channel num (int)] "
+      lprintf("Usage: all_ped_by_channel -c [crate num (int)] "
+          "-s [slot mask (hex)] -p [channel mask (hex)] "
+          "-l [lower Q ped check value] -u [upper Q ped check value] "
           "-f [pulser frequency (0 for softgts)] -n [number of pedestals per cell] "
           "-t [gt delay] -w [pedestal width] -d (update database)\n");
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
-    int slotNum = GetInt(input,"s",0);
-    int channelNum = GetInt(input,"p",0);
+    uint32_t slotMask = GetUInt(input,"s",0x0);
+    uint32_t channelMask = GetUInt(input,"p",0xFFFFFFFF);
+    int lower = GetInt(input,'l',300);
+    int upper = GetInt(input,'u',1000);
     float frequency = GetFloat(input,'f',0);
-    int numPeds = GetInt(input,'n',1000);
+    int numPeds = GetInt(input,'n',100);
     int gtDelay = GetInt(input,'t',DEFAULT_GT_DELAY);
     int pedWidth = GetInt(input,'w',DEFAULT_PED_WIDTH);
     int update = GetFlag(input,'d');
@@ -1246,9 +1249,37 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    PedRunByChannel(crateNum,slotNum,channelNum,frequency,gtDelay,pedWidth,numPeds,update);
+    AllPedRunByChannel(crateNum,slotMask,channelMask,frequency,gtDelay,pedWidth,numPeds,upper,lower,update);
     UnlockConnections(1,0x1<<crateNum);
-
+  }else if (strncmp(input,"ped_by_channel",14) == 0){
+    if (GetFlag(input,'h')){
+      lprintf("Usage: ped_by_channel -c [crate num (int)] "
+          "-s [slot num (int)] -p [channel num (int)] "
+          "-f [pulser frequency (0 for softgts)] -n [number of pedestals per cell] "
+          "-l [lower Q ped check value] -u [upper Q ped check value] "
+          "-t [gt delay] -w [pedestal width] -d (update database)\n");
+      goto err;
+    }
+    int crateNum = GetInt(input,'c',2);
+    int slotNum = GetInt(input,'s',0);
+    int channelNum = GetInt(input,'p',0);
+    float frequency = GetFloat(input,'f',0);
+    int numPeds = GetInt(input,'n',100);
+    int lower = GetInt(input,'l',300);
+    int upper = GetInt(input,'u',1000);
+    int gtDelay = GetInt(input,'t',DEFAULT_GT_DELAY);
+    int pedWidth = GetInt(input,'w',DEFAULT_PED_WIDTH);
+    int update = GetFlag(input,'d');
+    int busy = LockConnections(1,0x1<<crateNum);
+    if (busy){
+      if (busy > 9)
+        lprintf("Trying to access a board that has not been connected\n");
+      else
+        lprintf("ThoseConnections are currently in use.\n");
+      goto err;
+    }
+    PedRunByChannel(crateNum,slotNum,channelNum,frequency,gtDelay,pedWidth,numPeds,upper,lower,update);
+    UnlockConnections(1,0x1<<crateNum);
   }else if (strncmp(input,"see_refl",8) == 0){
     if (GetFlag(input,'h')){
       lprintf("Usage: see_refl -c [crate num (int)] "

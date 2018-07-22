@@ -108,6 +108,8 @@ COMMAND commands[] = {
     { "mb_stability_test", (Function *)NULL, (char *)NULL },
     { "mem_test", (Function *)NULL, (char *)NULL },
     { "ped_run", (Function *)NULL, (char *)NULL },
+    { "all_ped_by_channel", (Function *)NULL, (char *)NULL },
+    { "ped_by_channel", (Function *)NULL, (char *)NULL },
     { "see_refl", (Function *)NULL, (char *)NULL },
     { "esum_see_refl", (Function *)NULL, (char *)NULL },
     { "trigger_scan", (Function *)NULL, (char *)NULL },

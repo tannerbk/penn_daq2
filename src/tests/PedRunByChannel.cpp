@@ -11,19 +11,35 @@
 #include "XL3Model.h"
 #include "MTCModel.h"
 #include "PedRunByChannel.h"
+#include "DetectorDB.h"
 
-int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, int gtDelay, int pedWidth, int numPedestals, int updateDetectorDB)
+int AllPedRunByChannel(int crateNum, uint32_t slotMask, uint32_t channelMask, float frequency, int gtDelay, int pedWidth, int numPedestals, int upper, int lower, int detectorDB){
+
+  for(int slot = 0; slot < 16; slot++){
+    if((1<<slot) & slotMask){
+      for(int ch = 0; ch < 32; ch++){
+        if((1<<ch) & channelMask){
+          PedRunByChannel(crateNum, slot, ch, frequency, gtDelay, pedWidth, numPedestals, upper, lower, detectorDB);
+        }
+      }
+    }
+  }
+  printf("Finished pedestaling.\n");
+  return 0;
+}
+
+int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, int gtDelay, int pedWidth, int numPedestals, int upper, int lower, int updateDetectorDB)
 {
   lprintf("*** Starting Pedestal Run By Channel **************\n");
 
   lprintf("-------------------------------------------\n");
-  lprintf("Crate:		    %2d\n",crateNum);
-  lprintf("Slot Mask:		    0x%2d\n",slotNum);
-  lprintf("Pedestal Mask:	    0x%2d\n",channelNum);
-  lprintf("GT delay (ns):	    %3hu\n", gtDelay);
-  lprintf("Pedestal Width (ns):    %2d\n",pedWidth);
-  lprintf("Pulser Frequency (Hz):  %3.0f\n",frequency);
-  lprintf("Num pedestals:    %d\n",numPedestals);
+  lprintf("Crate: %2d\n",crateNum);
+  lprintf("Slot Num: %2d\n",slotNum);
+  lprintf("Channel Num: %2d\n",channelNum);
+  lprintf("GT delay (ns): %3hu\n", gtDelay);
+  lprintf("Pedestal Width (ns): %2d\n",pedWidth);
+  lprintf("Pulser Frequency (Hz): %3.0f\n",frequency);
+  lprintf("Num pedestals: %d\n",numPedestals);
 
   uint32_t *pmt_buffer = (uint32_t *) malloc(0x100000*sizeof(uint32_t));
   if (pmt_buffer == (uint32_t *) NULL){
@@ -118,7 +134,7 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
     errors = 0;
 
     // initialize pedestal struct
-    ped[channelNum].channelnumber = i;
+    ped[channelNum].channelnumber = channelNum;
     ped[channelNum].per_channel = 0;
     for (int j=0;j<16;j++){
       ped[channelNum].thiscell[j].cellno = j;
@@ -140,7 +156,6 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
       lprintf("There was an error in the count!\n");
       lprintf("Errors reading out MB %2d (errno %d)\n",slotNum,count);
       errors++;
-      continue;
     }
 
     lprintf("MB %d: %d bundles read out.\n",slotNum,count);
@@ -151,6 +166,7 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
     // process data
     uint32_t *pmt_iter = pmt_buffer;
     int ch,cell,crateID,num_events;
+    std::vector< std::vector<int> > pedQHSByCell(16, std::vector <int> (0));
 
     for (int i=0;i<count;i++){
       crateID = (int) UNPK_CRATE_ID(pmt_iter);
@@ -161,6 +177,14 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
       }
       ch = (int) UNPK_CHANNEL_ID(pmt_iter);
       cell = (int) UNPK_CELL_ID(pmt_iter);
+
+      if (ch != channelNum){
+        lprintf( "Invalid channel ID seen! (ch ID %2d, bundle %2d)\n",channelNum, ch);
+      }
+
+      int qhs = (int) UNPK_QHS(pmt_iter); 
+      pedQHSByCell[cell].push_back(qhs);
+
       ped[ch].thiscell[cell].qlxbar += (double) MY_UNPK_QLX(pmt_iter);
       ped[ch].thiscell[cell].qhsbar += (double) UNPK_QHS(pmt_iter);
       ped[ch].thiscell[cell].qhlbar += (double) UNPK_QHL(pmt_iter);
@@ -195,7 +219,7 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
 
           // now x_rms^2 = n/(n-1) * (<xxx^2>*N/N - xxx_bar^2)
           ped[channelNum].thiscell[j].qlxrms = num_events / (num_events -1)
-            * ( ped[i].thiscell[j].qlxrms / num_events
+            * ( ped[channelNum].thiscell[j].qlxrms / num_events
                 - pow( ped[channelNum].thiscell[j].qlxbar, 2.0));
           ped[channelNum].thiscell[j].qhlrms = num_events / (num_events -1)
             * ( ped[channelNum].thiscell[j].qhlrms / num_events
@@ -205,7 +229,7 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
                 - pow( ped[channelNum].thiscell[j].qhsbar, 2.0));
           ped[channelNum].thiscell[j].tacrms = num_events / (num_events -1)
             * ( ped[channelNum].thiscell[j].tacrms / num_events
-                - pow( ped[i].thiscell[j].tacbar, 2.0));
+                - pow( ped[channelNum].thiscell[j].tacbar, 2.0));
 
           // finally x_rms = sqrt(x_rms^2)
           if (ped[channelNum].thiscell[j].qlxrms > 0 || ped[channelNum].thiscell[j].qlxrms == 0)
@@ -239,13 +263,14 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
     lprintf("Ch Cell  #   Qhl         Qhs         Qlx         TAC\n");
     for (int j=0;j<16;j++){
       lprintf("%2d %3d %4d %6.1f %4.1f %6.1f %4.1f %6.1f %4.1f %6.1f %4.1f\n",
-          i,j,ped[channelNum].thiscell[j].per_cell,
+          channelNum,j,ped[channelNum].thiscell[j].per_cell,
           ped[channelNum].thiscell[j].qhlbar, ped[channelNum].thiscell[j].qhlrms,
           ped[channelNum].thiscell[j].qhsbar, ped[channelNum].thiscell[j].qhsrms,
           ped[channelNum].thiscell[j].qlxbar, ped[channelNum].thiscell[j].qlxrms,
           ped[channelNum].thiscell[j].tacbar, ped[channelNum].thiscell[j].tacrms);
       if (ped[channelNum].thiscell[j].per_cell < totalPulses/16*.8 || ped[channelNum].thiscell[j].per_cell > totalPulses/16*1.2){
         error_flag[channelNum] |= 0x1;
+      }
       if (ped[channelNum].thiscell[j].qhlbar < lower || 
           ped[channelNum].thiscell[j].qhlbar > upper ||
           ped[channelNum].thiscell[j].qhsbar < lower ||
@@ -253,10 +278,6 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
           ped[channelNum].thiscell[j].qlxbar < lower ||
           ped[channelNum].thiscell[j].qlxbar > upper){
         error_flag[channelNum] |= 0x2;
-      }
-      if (ped[channelNum].thiscell[j].tacbar > TACBAR_MAX ||
-          ped[channelNum].thiscell[j].tacbar < TACBAR_MIN){
-        error_flag[channelNum] |= 0x4;
       }
       // Note: Cell 0 ped width is often > 24
       if (ped[channelNum].thiscell[j].qhlrms > 48.0 || 
@@ -286,10 +307,32 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
     // turn off pedestals
     xl3s[crateNum]->SetCratePedestals(slotMask,0x0);
     xl3s[crateNum]->DeselectFECs();
-    if (errors)
+    if (errors){
       lprintf("There were %d errors\n",errors);
-    else
+    }
+    else{
       lprintf("No errors seen\n");
+    }
+
+    if(updateDetectorDB){
+      if(numPedestals <= 1000){
+        PGconn* detectorDB = ConnectToDetectorDB();
+        for(int cell = 0; cell < 16; cell++){
+          if(LoadPedestalsToDetectorDB(crateNum, slotNum, channelNum, cell, pedQHSByCell[cell], 
+             ped[channelNum].thiscell[cell].qhsbar, ped[channelNum].thiscell[cell].qhsrms,
+             ped[channelNum].thiscell[cell].qhlbar, ped[channelNum].thiscell[cell].qhlrms,
+             ped[channelNum].thiscell[cell].qlxbar, ped[channelNum].thiscell[cell].qlxrms,
+             detectorDB)){
+            lprintf("Failure loading pedestals to detectorDB for "
+                    "crate %d, slot %d, ch %d, cell %d \n", crateNum, slotNum, channelNum, cell);
+          }
+        }
+        CloseDetectorDBConnection(detectorDB);
+      }
+      else{
+        printf("Choose fewer pedestals to upload to detectorDB\n");
+      }
+    }
 
   }
   catch(const char* s){

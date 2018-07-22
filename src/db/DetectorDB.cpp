@@ -43,6 +43,24 @@ int CheckResultStatus(PGresult* qResult, PGconn* detectorDB){
   return 0;
 }
 
+// Function to turn std::vector<int> to string in order to push to detector DB
+void AppendStringIntVector(std::vector<int> array, char* buffer){
+
+  char returnstring[10000] = "'{";
+
+  for(int i= 0; i < int(array.size()); i++){
+    if(i != (array.size()-1)){
+      sprintf(returnstring + strlen(returnstring), "%d, ", array[i]);
+    }
+    else{
+      sprintf(returnstring + strlen(returnstring), "%d", array[i]);
+    }
+  }
+
+  sprintf(returnstring + strlen(returnstring), "}'");
+  strcpy(buffer, returnstring);
+}
+
 // Function to turn float* [size] to string in order to push to detector DB
 void AppendStringFloatArray(float* array, char* buffer, int size){
 
@@ -153,6 +171,32 @@ int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID
 
   PQclear(qResult);
   lprintf("Successful pushed zdisc info to detector state database. \n");
+  return 0;
+}
+
+int LoadPedestalsToDetectorDB(int crate, int slot, int channel, int cell, std::vector<int> qhs, 
+                              float qhs_avg, float qhs_rms, float qhl_avg, float qhl_rms, 
+                              float qlx_avg, float qlx_rms, PGconn* detectorDB){
+
+  char str_qhs[10000];
+
+  AppendStringIntVector(qhs, str_qhs);
+
+  char query[10000];
+  sprintf(query, "INSERT INTO pedestals "
+                 "(crate, slot, channel, cell, num_events, "
+                 "qhs_avg, qhs_std, qhl_avg, qhl_std, qlx_avg, qlx_std, qhs) "
+                 "VALUES (%d, %d, %d, %d, %d, %2f, %2f, %2f, %2f, %2f, %2f, %s)",
+                 crate, slot, channel, cell, int(qhs.size()), qhs_avg, qhs_rms,
+                 qhl_avg, qhl_rms, qlx_avg, qlx_rms, str_qhs);
+
+  PGresult *qResult = PQexec(detectorDB, query);
+
+  if(CheckResultStatus(qResult, detectorDB)){
+    return 1;
+  }
+
+  PQclear(qResult);
   return 0;
 }
 
