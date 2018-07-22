@@ -1580,7 +1580,7 @@ void *ControllerLink::ProcessCommand(void *arg)
       lprintf("For test mask, the bit map is: \n");
       lprintf("0: fec_test, 1: board_id, 2: cgt_test, 3: crate_cbal\n");
       lprintf("4: ped_run, 5: set_ttot, 6: get_ttot, 7: disc_check\n");
-      lprintf("8: gtvalid_test, 9: zdisc, 10: find_noise\n");
+      lprintf("8: gtvalid_test, 9: zdisc, 10: find_noise, 11: ped by channel \n");
       lprintf("-q (quick flag): run only essential ECAL tests \n");
       lprintf("-z use detectordb to set crate/slot mask \n"); 
       lprintf("If you want to do different slot masks for the different crates in the ECAL:\n");

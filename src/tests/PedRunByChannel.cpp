@@ -38,7 +38,7 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
   lprintf("Channel Num: %2d\n",channelNum);
   lprintf("GT delay (ns): %3hu\n", gtDelay);
   lprintf("Pedestal Width (ns): %2d\n",pedWidth);
-  lprintf("Pulser Frequency (Hz): %3.0f\n",frequency);
+  lprintf("Pulser Frequency (Hz): %2f\n",frequency);
   lprintf("Num pedestals: %d\n",numPedestals);
 
   uint32_t *pmt_buffer = (uint32_t *) malloc(0x100000*sizeof(uint32_t));
@@ -128,9 +128,7 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
     totalPulses = (afterGT - beforeGT);
     printf("Total pulses: %d (%d bundles)\n",totalPulses,totalPulses);
     xl3s[crateNum]->RW(FIFO_DIFF_PTR_R + FEC_SEL*2 + READ_REG,0x0,&result);
-    printf("before read out: %08x\n",result);
 
-    // loop over slots
     errors = 0;
 
     // initialize pedestal struct
@@ -284,7 +282,7 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
           ped[channelNum].thiscell[j].qhsrms > 48.0 ||
           ped[channelNum].thiscell[j].qlxrms > 48.0 ||
           ped[channelNum].thiscell[j].tacrms > 100.0){
-        error_flag[channelNum] |= 0x8;
+        error_flag[channelNum] |= 0x4;
       }
     }
     if (error_flag[channelNum] & 0x1){
@@ -294,9 +292,6 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
       lprintf(">>>Bad Q pedestal for this channel\n");
     }
     if (error_flag[channelNum] & 0x4){
-      lprintf(">>>Bad TAC pedestal for this channel\n");
-    }
-    if (error_flag[channelNum] & 0x8){
       lprintf(">>>Bad Q RMS pedestal for this channel\n");
     }
 
