@@ -124,15 +124,15 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
 
   // Get the testmask from -t and -q flags
   lprintf("Running the following tests: \n");
-  if ((testMask == 0xFFFFFFFF || (testMask & 0x3FF) == 0x3FF) && (!quickFlag)){
+  if ((testMask == 0xFFFFFFFF || (testMask & all_tests) == all_tests) && (!quickFlag)){
     lprintf("All \n");
-    testMask = 0xFFFFFFFF;
+    testMask = all_tests;
   }
   else if ((testMask != 0x0)){
     if (quickFlag){
       testMask &= quick_test_mask;
     }
-    for (int i=0;i<12;i++){
+    for (int i=0;i<num_ecal_tests;i++){
       if ((0x1<<i) & testMask){
         lprintf("%s ",testList[i]);
       }
