@@ -16,6 +16,7 @@
 #include "CrateCBal.h"
 #include "ZDisc.h"
 #include "FindNoise.h"
+#include "PedRunByChannel.h"
 
 #include "XL3Model.h"
 #include "MTCModel.h"
@@ -100,8 +101,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     GetNewID(ecalID);
     lprintf("Creating new ECAL %s\n",ecalID);
   }
-
-  
+ 
   // Print the current location and if UG allow the
   // slot mask to be set by detector DB
   if(CURRENT_LOCATION == ABOVE_GROUND_TESTSTAND){
@@ -124,15 +124,15 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
 
   // Get the testmask from -t and -q flags
   lprintf("Running the following tests: \n");
-  if ((testMask == 0xFFFFFFFF || (testMask & 0x3FF) == 0x3FF) && (!quickFlag)){
+  if ((testMask == 0xFFFFFFFF || (testMask & all_tests) == all_tests) && (!quickFlag)){
     lprintf("All \n");
-    testMask = 0xFFFFFFFF;
+    testMask = all_tests;
   }
   else if ((testMask != 0x0)){
     if (quickFlag){
-      testMask &= 0x728;
+      testMask &= quick_test_mask;
     }
-    for (int i=0;i<11;i++){
+    for (int i=0;i<num_ecal_tests;i++){
       if ((0x1<<i) & testMask){
         lprintf("%s ",testList[i]);
       }
@@ -144,8 +144,8 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
   }
   // Do only ECAL tests that set hardware settings
   else if(quickFlag){
-    testMask = 0x728; 
-    for (int i=0;i<11;i++){
+    testMask = quick_test_mask; 
+    for (int i=0;i<num_ecal_tests;i++){
       if ((0x1<<i) & testMask){
         lprintf("%s ",testList[i]);
       }
@@ -307,6 +307,12 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
       for (int i=0;i<MAX_XL3_CON;i++)
         if ((0x1<<i) & crateMask)
           FindNoise((0x1<<i),slotMasks,200,1,1,1,1,1);
+    testCounter++;
+
+    if ((0x1<<testCounter) & testMask)
+      for (int i=0;i<MAX_XL3_CON;i++)
+        if ((0x1<<i) & crateMask)
+          AllPedRunByChannel(i,slotMasks[i],0xFFFFFFFF,0,DEFAULT_GT_DELAY,DEFAULT_PED_WIDTH,100,1000,300,1);
 
     lprintf("ECAL finished!\n");
 

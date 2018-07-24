@@ -14,6 +14,11 @@ int CheckResultsStatus(PGresult* qResult, PGconn* detectorDB);
 // a part of the Fec Doc, which only stores hardware settings
 int LoadZDiscToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB);
 
+// Load pedestal measurements for each cell to detector database 
+int LoadPedestalsToDetectorDB(int crate, int slot, int channel, int cell, std::vector<int> qhs,
+                              float qhs_avg, float qhs_rms, float qhl_avg, float qhl_rms,
+                              float qlx_avg, float qlx_rms, PGconn* detectorDB);
+
 // Load measured GT valid lengths to detector database
 int LoadGTValidsToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB);
 
@@ -33,6 +38,7 @@ int UpdateChannelStatus(int crate, int slot, int channel, PGconn* detectorDB);
 void AppendStringArray(JsonNode* array, char* buffer, int size);
 void AppendStringIntArray(int* array, char* buffer, int size);
 void AppendStringFloatArray(float* array, char* buffer, int size);
+void AppendStringIntVector(std::vector<float> array, char* buffer);
 
 // This is used in SeeRefl test to update whether the triggers are working
 int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* detectorDB);

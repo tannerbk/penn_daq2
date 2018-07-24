@@ -5,7 +5,10 @@
 
 int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFlag, const char* loadECAL, int detectorFlag);
 
-static const char testList[11][30] = {"fec_test","board_id","cgt_test","crate_cbal","ped_run","set_ttot","get_ttot","disc_check","gtvalid_test","zdisc","find_noise"};
+const int quick_test_mask = 0xF28;
+const int all_test = 0xFFF;
+const int num_ecal_tests = 12;
+static const char testList[num_ecal_tests][30] = {"fec_test","board_id","cgt_test","crate_cbal","ped_run","set_ttot","get_ttot","disc_check","gtvalid_test","zdisc","find_noise","all_ped_by_channel"};
 
 #endif
 
