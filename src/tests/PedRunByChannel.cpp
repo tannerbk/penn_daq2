@@ -9,11 +9,15 @@
 
 #include "DB.h"
 #include "XL3Model.h"
+#include "XL3Cmds.h"
 #include "MTCModel.h"
 #include "PedRunByChannel.h"
 #include "DetectorDB.h"
 
 int AllPedRunByChannel(int crateNum, uint32_t slotMask, uint32_t channelMask, float frequency, int gtDelay, int pedWidth, int numPedestals, int upper, int lower, int detectorDB){
+
+  // Crate init with xilinx to setup readout
+  CrateInit(crateNum,slotMask,1,0,0,0,0,0,0,0,0);
 
   for(int slot = 0; slot < 16; slot++){
     if((1<<slot) & slotMask){
@@ -176,10 +180,6 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
       ch = (int) UNPK_CHANNEL_ID(pmt_iter);
       cell = (int) UNPK_CELL_ID(pmt_iter);
 
-      if (ch != channelNum){
-        lprintf( "Invalid channel ID seen! (ch ID %2d, bundle %2d)\n",channelNum, ch);
-      }
-
       int qhs = (int) UNPK_QHS(pmt_iter); 
       pedQHSByCell[cell].push_back(qhs);
 
@@ -256,8 +256,6 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
       }
     }
 
-    uint32_t error_flag[32];
-
     lprintf("Ch Cell  #   Qhl         Qhs         Qlx         TAC\n");
     for (int j=0;j<16;j++){
       lprintf("%2d %3d %4d %6.1f %4.1f %6.1f %4.1f %6.1f %4.1f %6.1f %4.1f\n",
@@ -266,33 +264,6 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
           ped[channelNum].thiscell[j].qhsbar, ped[channelNum].thiscell[j].qhsrms,
           ped[channelNum].thiscell[j].qlxbar, ped[channelNum].thiscell[j].qlxrms,
           ped[channelNum].thiscell[j].tacbar, ped[channelNum].thiscell[j].tacrms);
-      if (ped[channelNum].thiscell[j].per_cell < totalPulses/16*.8 || ped[channelNum].thiscell[j].per_cell > totalPulses/16*1.2){
-        error_flag[channelNum] |= 0x1;
-      }
-      if (ped[channelNum].thiscell[j].qhlbar < lower || 
-          ped[channelNum].thiscell[j].qhlbar > upper ||
-          ped[channelNum].thiscell[j].qhsbar < lower ||
-          ped[channelNum].thiscell[j].qhsbar > upper ||
-          ped[channelNum].thiscell[j].qlxbar < lower ||
-          ped[channelNum].thiscell[j].qlxbar > upper){
-        error_flag[channelNum] |= 0x2;
-      }
-      // Note: Cell 0 ped width is often > 24
-      if (ped[channelNum].thiscell[j].qhlrms > 48.0 || 
-          ped[channelNum].thiscell[j].qhsrms > 48.0 ||
-          ped[channelNum].thiscell[j].qlxrms > 48.0 ||
-          ped[channelNum].thiscell[j].tacrms > 100.0){
-        error_flag[channelNum] |= 0x4;
-      }
-    }
-    if (error_flag[channelNum] & 0x1){
-      lprintf(">>>Wrong no of pedestals for this channel\n");
-    }
-    if (error_flag[channelNum] & 0x2){
-      lprintf(">>>Bad Q pedestal for this channel\n");
-    }
-    if (error_flag[channelNum] & 0x4){
-      lprintf(">>>Bad Q RMS pedestal for this channel\n");
     }
 
     // disable triggers
