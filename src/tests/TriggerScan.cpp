@@ -8,19 +8,37 @@
 #include "MTCModel.h"
 #include "TriggerScan.h"
 
-int TriggerScan(uint32_t crateMask, uint32_t *slotMasks, int triggerSelect, int dacSelect, int maxNhit, int minThresh, const char* fileName, int quickMode)
+// TODO replace the pedestal setting with the XL3's SetCratePedestal
+// Also should enable triggers here as their pedestals are enabled
+
+int TriggerScan(const uint32_t crateMask, uint32_t *slotMasks, const int
+        triggerSelect, const int dacSelect, int maxNhit, const int
+        minThresh, const char* fileName, const int quickMode, const int tub)
 {
   lprintf("*** Starting Trigger Scan  *************\n");
+  lprintf("Selected trigger is %i\n", triggerSelect);
+  lprintf("Selected dac is %i\n", dacSelect);
+  lprintf("Max nhit is %i\n", maxNhit);
+  lprintf("Min DAC is %i\n", 4095 - minThresh);
+
+  // Maximum scanned nhits per dac
+  const int NVALUES=10000;
+  // Number of soft gts to send to MTC at each nhit
+  const int NPULSES = 500;
+  const uint32_t tub_mask = MSK_TUB | MSK_TUB_B;
+  const uint32_t mtc_gt_crate_mask =  tub ? tub_mask : 0;
+  const uint32_t mtc_ped_crate_mask = tub ? crateMask | tub_mask : crateMask;
 
   uint32_t select_reg,result,beforegt,aftergt;
   int num_fecs = 0;
   int min_nhit = 0;
   int last_zero, one_count,noise_count;
-  float values[10000];
+  float values[NVALUES];
   uint32_t pedestals[MAX_XL3_CON][16];
   uint16_t counts[14];
-  for (int i=0;i<14;i++)
+  for (int i=0;i<14;i++) {
     counts[i] = 10;
+  }
 
   FILE *file = fopen(fileName,"w");
   if (file == (FILE *) NULL){
@@ -29,10 +47,9 @@ int TriggerScan(uint32_t crateMask, uint32_t *slotMasks, int triggerSelect, int 
   }
 
   try {
-
     lprintf("Starting a trigger scan.\n");
     int errors = mtc->SetupPedestals(0, DEFAULT_PED_WIDTH, DEFAULT_GT_DELAY,0,
-        crateMask,crateMask);
+        mtc_ped_crate_mask,mtc_gt_crate_mask);
     if (errors){
       lprintf("Error setting up MTC for pedestals. Exiting\n");
       mtc->UnsetPedCrateMask(MASKALL);
@@ -63,27 +80,29 @@ int TriggerScan(uint32_t crateMask, uint32_t *slotMasks, int triggerSelect, int 
     for (int ithresh=0;ithresh<4095-minThresh;ithresh++){
       // if quick mode, do the first 50 then only every 10
       if (ithresh > 50 && quickMode == 1){ithresh += 9;}
-      if (dacSelect >= 0)
+      if (dacSelect >= 0) {
         counts[dacSelect] = 4095-ithresh;
-      else
-        counts[triggerSelect-1] = 4095-ithresh;
+      } else {
+        counts[triggerSelect] = 4095-ithresh;
+      }
 
       // now disable triggers while programming dacs
       // so we dont trigger off noise
       mtc->UnsetGTMask(0xFFFFFFFF);
       mtc->LoadMTCADacsByCounts(counts);
       usleep(500);
-      mtc->SetGTMask(0x1<<(triggerSelect-1));
+      mtc->SetGTMask(0x1<<(triggerSelect));
 
-      for (int i=0;i<10000;i++)
+      for (int i=0;i<NVALUES;i++) {
         values[i] = -1;
+      }
       last_zero = 0;
       noise_count = 0;
       one_count = 0;
 
       // now we loop over nhit
       // we loop over the small subset that interests us
-      for (int inhit=min_nhit;inhit<maxNhit;inhit++){
+      for (int inhit=min_nhit; inhit<maxNhit; inhit++){
         // we need to get our pedestals set up right
         // first we set up all the fully on fecs
         int full_fecs = inhit/32;
@@ -142,14 +161,14 @@ int TriggerScan(uint32_t crateMask, uint32_t *slotMasks, int triggerSelect, int 
         mtc->RegRead(MTCOcGtReg,&beforegt);
 
         // send 500 pulses
-        mtc->MultiSoftGT(500);
+        mtc->MultiSoftGT(NPULSES);
 
         // now get final gt count
         mtc->RegRead(MTCOcGtReg,&aftergt);
 
         // top bits are junk
         uint32_t diff = (aftergt & 0x00FFFFFF) - (beforegt & 0x00FFFFFF);
-        values[inhit] = (float) diff / 500.0;
+        values[inhit] = (float) diff / (float)NPULSES;
 
         // we will start at an nhit based on where
         // we start seeing triggers
@@ -158,15 +177,17 @@ int TriggerScan(uint32_t crateMask, uint32_t *slotMasks, int triggerSelect, int 
 
         // we will stop at an nhit based on where
         // we hit the triangle of bliss
-        if (values[inhit] > 0.9 && values[inhit] < 1.1)
+        if (values[inhit] > 0.9 && values[inhit] < 1.1) {
           one_count++;
+        }
 
         // we will also stop if we are stuck in the
         // noise for too long meaning we arent at a
         // high enough threshold to see the triangle
         // of bliss
-        if (values[inhit] > 1.2)
+        if (values[inhit] > 1.2) {
           noise_count++;
+        }
 
         if (one_count > 5 || noise_count > 25){
           // we are done with this threshold
@@ -178,7 +199,7 @@ int TriggerScan(uint32_t crateMask, uint32_t *slotMasks, int triggerSelect, int 
 
       // now write out this thresholds worth of results
       // to file
-      for (int i=0;i<10000;i++){
+      for (int i=0;i<NVALUES;i++){
         // only print out nhit we tested
         if (values[i] >= 0){
           fprintf(file,"%d %d %f\n",ithresh,i,values[i]);
@@ -199,4 +220,3 @@ int TriggerScan(uint32_t crateMask, uint32_t *slotMasks, int triggerSelect, int 
   lprintf("****************************************\n");
   return 0;
 }
-

@@ -1339,6 +1339,8 @@ void *ControllerLink::ProcessCommand(void *arg)
           "-n [max nhit to scan to (int)] -m [scan from 4095 to m value (int)] "
           "-d [threshold dac to program (by default the one you are triggering on)] "
           "-q (quick mode - first 50 DAC counts, then steps of 10)\n "
+          "-v [add tub to crate trigger mask]\n"
+          "N.B. Channel triggers must be enabled prior to running this\n"
           " Trigger mapping:\n "
           " 0: N100L \n"
           " 1: N100M \n"
@@ -1360,6 +1362,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     int triggerSelect = GetInt(input,'t',0);
     int dacSelect = GetInt(input,'d',-1);
     int quick = GetFlag(input,'q');
+    int tub = GetFlag(input,'b');
     char fileName[1000];
     GetString(input,fileName,'f',"data/triggerscan.dat");
     int busy = LockConnections(1,crateMask);
@@ -1370,7 +1373,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    TriggerScan(crateMask,slotMasks,triggerSelect,dacSelect,nhitMax,threshMin,fileName,quick);
+    TriggerScan(crateMask,slotMasks,triggerSelect,dacSelect,nhitMax,threshMin,fileName,quick,tub);
     UnlockConnections(1,crateMask);
 
   }else if (strncmp(input,"get_ttot",8) == 0){
