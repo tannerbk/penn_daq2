@@ -16,7 +16,7 @@ PGconn* ConnectToDetectorDB(){
 
   if(PQstatus(detectorDB) == CONNECTION_BAD){
     char* error = PQerrorMessage(detectorDB);
-    lprintf("ProduceRunTableProc: Connection to database failed. Error %s \n", error);
+    lprintf("Connection to database failed. Error %s \n", error);
     return detectorDB;
   }
 
