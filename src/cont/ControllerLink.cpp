@@ -1251,7 +1251,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    AllPedRunByChannel(crateNum,slotMask,channelMask,frequency,gtDelay,pedWidth,numPeds,upper,lower,update,updateDetectorDB);
+    AllPedRunByChannel(crateNum,slotMask,channelMask,frequency,gtDelay,pedWidth,numPeds,upper,lower,update,updateDetectorDB,0);
     UnlockConnections(1,0x1<<crateNum);
   }else if (strncmp(input,"ped_by_channel",14) == 0){
     if (GetFlag(input,'h')){

@@ -32,7 +32,7 @@ int AllPedRunByChannel(int crateNum, uint32_t slotMask, uint32_t channelMask, fl
           qhs[ch] = qhs_max;
           qhl[ch] = qhl_max;
           qlx[ch] = qlx_max;
-          printf("Ch QHS QHL QLX: %d %d %d %d\n", error_flags[ch], qhs[ch], qhl[ch], qlx[ch]);
+          printf("Ch QHS QHL QLX: %d %f %f %f\n", error_flags[ch], qhs[ch], qhl[ch], qlx[ch]);
         }
       }
     }
@@ -45,20 +45,20 @@ int AllPedRunByChannel(int crateNum, uint32_t slotMask, uint32_t channelMask, fl
       JsonNode* qlxarray = json_mkarray();
       int pass_flag = 1;
       for(int i = 0; i < 32; i++){
-        if(error_flag[i] != 0){
+        if(error_flags[i] != 0){
           pass_flag = 0;
         }
-        json_append_element(errors, error_flags[i]);
-        json_append_element(qhlarray, qhl[i]);
-        json_append_element(qhsarray, qhs[i]);
-        json_append_element(qlxarray, qlx[i]);
+        json_append_element(errors, json_mknumber(error_flags[i]));
+        json_append_element(qhlarray, json_mknumber(qhl[i]));
+        json_append_element(qhsarray, json_mknumber(qhs[i]));
+        json_append_element(qlxarray, json_mknumber(qlx[i]));
       }
       json_append_member(newdoc,"type",json_mkstring("ped_run_by_channel"));
       json_append_member(newdoc,"errors",errors);
       json_append_member(newdoc,"qhs",qhsarray);
       json_append_member(newdoc,"qhl",qhlarray);
       json_append_member(newdoc,"qlx",qlxarray);
-      json_append_member(newdoc,"pass",json_mkdool(pass_flag));
+      json_append_member(newdoc,"pass",json_mkbool(pass_flag));
       if(ecal){
         json_append_member(newdoc,"ecal_id",json_mkstring(ecalID));
       }
@@ -95,6 +95,8 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
     free(pmt_buffer);
     return -1;
   }
+
+  uint32_t error_flag = 0;
 
   try {
 
@@ -296,7 +298,6 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
       }
     }
 
-    uint32_t error_flag = 0;
     qhs_max = 0;
     qhl_max = 0;
     qlx_max = 0;
