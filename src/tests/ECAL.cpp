@@ -312,7 +312,7 @@ int ECAL(uint32_t crateMask, uint32_t *slotMasks, uint32_t testMask, int quickFl
     if ((0x1<<testCounter) & testMask)
       for (int i=0;i<MAX_XL3_CON;i++)
         if ((0x1<<i) & crateMask)
-          AllPedRunByChannel(i,slotMasks[i],0xFFFFFFFF,0,DEFAULT_GT_DELAY,DEFAULT_PED_WIDTH,100,1000,300,1);
+          AllPedRunByChannel(i,slotMasks[i],0xFFFFFFFF,0,DEFAULT_GT_DELAY,DEFAULT_PED_WIDTH,100,1000,300,1,1,1);
 
     lprintf("ECAL finished!\n");
 

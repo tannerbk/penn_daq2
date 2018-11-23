@@ -1228,7 +1228,8 @@ void *ControllerLink::ProcessCommand(void *arg)
           "-s [slot mask (hex)] -p [channel mask (hex)] "
           "-l [lower Q ped check value] -u [upper Q ped check value] "
           "-f [pulser frequency (0 for softgts)] -n [number of pedestals per cell] "
-          "-t [gt delay] -w [pedestal width] -d (update database)\n");
+          "-t [gt delay] -w [pedestal width] -d (update database) "
+          "-z (update detector database) \n");
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
@@ -1241,6 +1242,7 @@ void *ControllerLink::ProcessCommand(void *arg)
     int gtDelay = GetInt(input,'t',DEFAULT_GT_DELAY);
     int pedWidth = GetInt(input,'w',DEFAULT_PED_WIDTH);
     int update = GetFlag(input,'d');
+    int updateDetectorDB = GetFlag(input,'z');
     int busy = LockConnections(1,0x1<<crateNum);
     if (busy){
       if (busy > 9)
@@ -1249,7 +1251,7 @@ void *ControllerLink::ProcessCommand(void *arg)
         lprintf("ThoseConnections are currently in use.\n");
       goto err;
     }
-    AllPedRunByChannel(crateNum,slotMask,channelMask,frequency,gtDelay,pedWidth,numPeds,upper,lower,update);
+    AllPedRunByChannel(crateNum,slotMask,channelMask,frequency,gtDelay,pedWidth,numPeds,upper,lower,update,updateDetectorDB);
     UnlockConnections(1,0x1<<crateNum);
   }else if (strncmp(input,"ped_by_channel",14) == 0){
     if (GetFlag(input,'h')){
