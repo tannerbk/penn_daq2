@@ -470,6 +470,14 @@ int AddECALTestResults(JsonNode *fec_doc, JsonNode *test_doc, unsigned int* chan
       }
     }
   }
+  else if (strcmp(type, "ped_run_by_channel") == 0){
+    JsonNode *errors = json_find_member(test_doc,"errors");
+    for (i=0;i<32;i++){
+      if (json_get_bool(json_find_element(errors,i))){
+        chan_prob_array[i] |= (1<<ped_run_by_channel);
+      }
+    }
+  }
 
   JsonNode *new_channel = json_mkobject();
   JsonNode *new_chan_problems = json_mkarray();

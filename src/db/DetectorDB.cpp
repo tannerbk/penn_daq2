@@ -283,8 +283,6 @@ int LoadChannelProblemsToDetectorDB(JsonNode* doc, int crate, int slot, const ch
   lprintf("Successful pushed channel problems info to detector state database. \n");
 
   return 0;
-  
-  
 }
 
 int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB){

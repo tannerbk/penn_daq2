@@ -20,14 +20,16 @@ static const char test_map[ntests][20] = {
     "crate_cbal","zdisc","set_ttot","cmos_m_gtvalid","find_noise_2"};
 
 // A couple non-critical test that are useful to keep track of errors for
-const static int nntests = 5;
+const static int nntests = 6;
 static const char test_map_ncrit[nntests][20] = 
-    {"ped_run", "cgt_test", "get_ttot", "fec_test", "disc_check"};
+    {"ped_run", "cgt_test", "get_ttot", "fec_test", 
+     "disc_check", "ped_run_by_channel"};
 
 // Map from test to error bit
 enum Bit { cbal_fail = 0, zdisc_fail = 1, sttot_fail = 2, 
            gtvalid_fail = 3, ped_fail = 4, cgt_fail = 5, 
-           gttot_fail = 6 , fec_test_fail = 7, disc_check_fail = 8};
+           gttot_fail = 6 , fec_test_fail = 7, disc_check_fail = 8,
+           ped_run_by_channel = 9};
 
 int GetNewID(char* newid);
 
