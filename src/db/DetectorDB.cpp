@@ -16,7 +16,7 @@ PGconn* ConnectToDetectorDB(){
 
   if(PQstatus(detectorDB) == CONNECTION_BAD){
     char* error = PQerrorMessage(detectorDB);
-    lprintf("ProduceRunTableProc: Connection to database failed. Error %s \n", error);
+    lprintf("Connection to database failed. Error %s \n", error);
     return detectorDB;
   }
 
@@ -283,8 +283,6 @@ int LoadChannelProblemsToDetectorDB(JsonNode* doc, int crate, int slot, const ch
   lprintf("Successful pushed channel problems info to detector state database. \n");
 
   return 0;
-  
-  
 }
 
 int LoadFECDocToDetectorDB(JsonNode* doc, int crate, int slot, const char* ecalID, PGconn* detectorDB){

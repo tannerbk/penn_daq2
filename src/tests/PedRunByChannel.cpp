@@ -14,20 +14,73 @@
 #include "PedRunByChannel.h"
 #include "DetectorDB.h"
 
-int AllPedRunByChannel(int crateNum, uint32_t slotMask, uint32_t channelMask, float frequency, int gtDelay, int pedWidth, int numPedestals, int upper, int lower, int detectorDB){
+int AllPedRunByChannel(int crateNum, uint32_t slotMask, uint32_t channelMask, float frequency, int gtDelay, int pedWidth, int numPedestals, int upper, int lower, int updateDB, int detectorDB, int ecal=0){
 
   // Crate init with xilinx to setup readout
   CrateInit(crateNum,slotMask,1,0,0,0,0,0,0,0,0);
+
+  uint32_t error_flags[32];
+  double qhsmax[32];
+  double qlxmax[32];
+  double qhlmax[32];
+  double qhsmin[32];
+  double qlxmin[32];
+  double qhlmin[32];
 
   for(int slot = 0; slot < 16; slot++){
     if((1<<slot) & slotMask){
       for(int ch = 0; ch < 32; ch++){
         if((1<<ch) & channelMask){
-          PedRunByChannel(crateNum, slot, ch, frequency, gtDelay, pedWidth, numPedestals, upper, lower, detectorDB);
+          error_flags[ch] = PedRunByChannel(crateNum, slot, ch, frequency, gtDelay, pedWidth, numPedestals, upper, lower, detectorDB);
+          qhsmax[ch] = qhs_max;
+          qhlmax[ch] = qhl_max;
+          qlxmax[ch] = qlx_max;
+          qhsmin[ch] = qhs_min;
+          qhlmin[ch] = qhl_min;
+          qlxmin[ch] = qlx_min;
         }
+      }
+      if(updateDB){
+        lprintf("updating the database for slot: %d\n", slot);
+        JsonNode* newdoc = json_mkobject();
+        JsonNode* errors = json_mkarray();
+        JsonNode* qhlarray_max = json_mkarray();
+        JsonNode* qhsarray_max = json_mkarray();
+        JsonNode* qlxarray_max = json_mkarray();
+        JsonNode* qhlarray_min = json_mkarray();
+        JsonNode* qhsarray_min = json_mkarray();
+        JsonNode* qlxarray_min = json_mkarray();
+        int pass_flag = 1;
+        for(int i = 0; i < 32; i++){
+          if(error_flags[i] != 0){
+            pass_flag = 0;
+          }
+          json_append_element(errors, json_mknumber(error_flags[i]));
+          json_append_element(qhlarray_max, json_mknumber(qhlmax[i]));
+          json_append_element(qhsarray_max, json_mknumber(qhsmax[i]));
+          json_append_element(qlxarray_max, json_mknumber(qlxmax[i]));
+          json_append_element(qhlarray_min, json_mknumber(qhlmin[i]));
+          json_append_element(qhsarray_min, json_mknumber(qhsmin[i]));
+          json_append_element(qlxarray_min, json_mknumber(qlxmin[i]));
+        }
+        json_append_member(newdoc,"type",json_mkstring("ped_run_by_channel"));
+        json_append_member(newdoc,"errors",errors);
+        json_append_member(newdoc,"qhs_max",qhsarray_max);
+        json_append_member(newdoc,"qhl_max",qhlarray_max);
+        json_append_member(newdoc,"qlx_max",qlxarray_max);
+        json_append_member(newdoc,"qhs_min",qhsarray_min);
+        json_append_member(newdoc,"qhl_min",qhlarray_min);
+        json_append_member(newdoc,"qlx_min",qlxarray_min);
+        json_append_member(newdoc,"pass",json_mkbool(pass_flag));
+        if(ecal){
+          json_append_member(newdoc,"ecal_id",json_mkstring(ecalID));
+        }
+        PostDebugDoc(crateNum,slot,newdoc);
+        json_delete(newdoc); 
       }
     }
   }
+
   printf("Finished pedestaling.\n");
   return 0;
 }
@@ -50,12 +103,15 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
     lprintf("Problem mallocing!\n");
     return -1;
   }
+
   struct pedestal *ped = (struct pedestal *) malloc(32*sizeof(struct pedestal)); 
   if (ped == (struct pedestal *) NULL){
     lprintf("Problem mallocing!\n");
     free(pmt_buffer);
     return -1;
   }
+
+  uint32_t error_flag = 0;
 
   try {
 
@@ -199,6 +255,7 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
       pmt_iter += 3; //increment pointer
     }
 
+
     // do final step
     // final step of calculation
     if (ped[channelNum].per_channel > 0){
@@ -256,6 +313,51 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
       }
     }
 
+    qhs_max = 0.0, qhl_max = 0.0, qlx_max = 0.0;
+    qhs_min = 4095.0, qhl_min = 4095.0, qlx_min = 4095.0;
+
+    for (int j=0;j<16;j++){
+
+      if(ped[channelNum].thiscell[j].qhlbar > qhl_max){
+        qhl_max = ped[channelNum].thiscell[j].qhlbar;
+      }
+      if(ped[channelNum].thiscell[j].qhsbar > qhs_max){
+        qhs_max = ped[channelNum].thiscell[j].qhsbar;
+      }
+      if(ped[channelNum].thiscell[j].qlxbar > qlx_max){
+        qlx_max = ped[channelNum].thiscell[j].qlxbar;
+      }
+
+      if(ped[channelNum].thiscell[j].qhlbar < qhl_min){
+        qhl_min = ped[channelNum].thiscell[j].qhlbar;
+      }
+      if(ped[channelNum].thiscell[j].qhsbar < qhs_min){
+        qhs_min = ped[channelNum].thiscell[j].qhsbar;
+      }
+      if(ped[channelNum].thiscell[j].qlxbar < qlx_min){
+        qlx_min = ped[channelNum].thiscell[j].qlxbar;
+      }
+
+      if (ped[channelNum].thiscell[j].per_cell < totalPulses/16*.8 || 
+          ped[channelNum].thiscell[j].per_cell > totalPulses/16*1.2){
+        error_flag |= 0x1;
+      }
+      if (ped[channelNum].thiscell[j].qhlbar < lower ||
+          ped[channelNum].thiscell[j].qhlbar > upper ||
+          ped[channelNum].thiscell[j].qhsbar < lower ||
+          ped[channelNum].thiscell[j].qhsbar > upper ||
+          ped[channelNum].thiscell[j].qlxbar < lower ||
+          ped[channelNum].thiscell[j].qlxbar > upper){
+        error_flag |= 0x2;
+      }
+      if (ped[channelNum].thiscell[j].qhlrms > 48.0 ||
+          ped[channelNum].thiscell[j].qhsrms > 48.0 ||
+          ped[channelNum].thiscell[j].qlxrms > 48.0){
+        error_flag |= 0x4;
+       }
+     }
+
+
     lprintf("Ch Cell  #   Qhl         Qhs         Qlx         TAC\n");
     for (int j=0;j<16;j++){
       lprintf("%2d %3d %4d %6.1f %4.1f %6.1f %4.1f %6.1f %4.1f %6.1f %4.1f\n",
@@ -277,7 +379,7 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
       lprintf("There were %d errors\n",errors);
     }
     else{
-      lprintf("No errors seen\n");
+      lprintf("No run errors seen\n");
     }
 
     if(updateDetectorDB){
@@ -302,12 +404,12 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
 
   }
   catch(const char* s){
-    lprintf("PedRun: %s\n",s);
+    lprintf("PedRunByChannel: %s\n",s);
   }
   free(pmt_buffer);
   free(ped);
   lprintf("****************************************\n");
 
-  return 0;
+  return error_flag;
 }
 
