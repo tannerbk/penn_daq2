@@ -36,7 +36,6 @@ int CheckResultStatus(PGresult* qResult, PGconn* detectorDB){
     char* error = PQresStatus(PQresultStatus(qResult));
     lprintf("Query to DetectorDB failed %s.\n", error);
     PQclear(qResult);
-    PQfinish(detectorDB);
     return 1;
   }
 
