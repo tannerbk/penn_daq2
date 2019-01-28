@@ -16,9 +16,6 @@
 
 int AllPedRunByChannel(int crateNum, uint32_t slotMask, uint32_t channelMask, float frequency, int gtDelay, int pedWidth, int numPedestals, int upper, int lower, int updateDB, int detectorDB, int ecal=0){
 
-  // Crate init with xilinx to setup readout
-  CrateInit(crateNum,slotMask,1,0,0,0,0,0,0,0,0);
-
   uint32_t error_flags[32];
   double qhsmax[32];
   double qlxmax[32];
@@ -116,7 +113,7 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
   try {
 
     // set up crate
-    xl3s[crateNum]->ChangeMode(INIT_MODE,0x0);
+    xl3s[crateNum]->ChangeMode(INIT_MODE,(1<<slotNum));
 
     // set up MTC
     int errors = mtc->SetupPedestals(frequency,pedWidth,gtDelay,DEFAULT_GT_FINE_DELAY,
