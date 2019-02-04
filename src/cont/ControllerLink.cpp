@@ -1587,7 +1587,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       lprintf("4: ped_run, 5: set_ttot, 6: get_ttot, 7: disc_check\n");
       lprintf("8: gtvalid_test, 9: zdisc, 10: find_noise, 11: ped by channel \n");
       lprintf("-q (quick flag): run only essential ECAL tests \n");
-      lprintf("-z use detectordb to set crate/slot mask \n"); 
+      lprintf("-z use detectordb to set slot mask \n");
+      lprintf("For example: ecal -c 7ffff -z -q \n");
       lprintf("If you want to do different slot masks for the different crates in the ECAL:\n");
       lprintf("-crate_num [one slot mask (hex)] e.g -0 7fff -1 000f -13 ffef\n");
       goto err;
