@@ -44,7 +44,7 @@ void AppendStringIntVector(std::vector<float> array, char* buffer);
 int UpdateTriggerStatus(int type, int crate, int slot, int channel, PGconn* detectorDB);
 
 // Used to get slot mask according to detectordb
-int DetectorSlotMask(uint32_t crateMask, uint32_t *slotMask, PGconn* detectorDB);
+int DetectorSlotMask(uint32_t crateMask, uint32_t *&slotMask, PGconn* detectorDB);
 
 
 #endif

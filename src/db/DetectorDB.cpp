@@ -461,9 +461,8 @@ int UpdateChannelStatus(int crate, int slot, int channel, PGconn* detectorDB){
   return 0;
 }
 
-int DetectorSlotMask(uint32_t crateMask, uint32_t *slotMasks, PGconn* detectorDB){
+int DetectorSlotMask(uint32_t crateMask, uint32_t *&slotMasks, PGconn* detectorDB){
 
-  uint32_t newSlotMasks[MAX_XL3_CON] = {0};
   PGresult *qResult;
 
   char query[2048];
@@ -490,14 +489,9 @@ int DetectorSlotMask(uint32_t crateMask, uint32_t *slotMasks, PGconn* detectorDB
     char* slot_str = PQgetvalue(qResult, i, 1); 
     int crateNum = strtoul(crate_str, NULL, 0);
     int slotNum = strtoul(slot_str, NULL, 0);
-    newSlotMasks[crateNum] |= (1 << slotNum);
+    slotMasks[crateNum] |= (1 << slotNum);
   }
 
-  for(int i = 0; i < MAX_XL3_CON; i++){
-    if((0x1<<i) & crateMask){
-      slotMasks[i] &= newSlotMasks[i];
-    }
-  }
   PQclear(qResult);
 
   return 0;
