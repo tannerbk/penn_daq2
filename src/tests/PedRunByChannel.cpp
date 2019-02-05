@@ -350,11 +350,13 @@ int PedRunByChannel(int crateNum, int slotNum, int channelNum, float frequency, 
           ped[channelNum].thiscell[j].qlxbar > upper){
         error_flag |= 0x2;
       }
+      /* 
       if (ped[channelNum].thiscell[j].qhlrms > 48.0 ||
           ped[channelNum].thiscell[j].qhsrms > 48.0 ||
           ped[channelNum].thiscell[j].qlxrms > 48.0){
         error_flag |= 0x4;
        }
+       */
      }
 
 
