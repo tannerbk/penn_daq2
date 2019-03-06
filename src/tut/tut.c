@@ -99,6 +99,7 @@ COMMAND commands[] = {
     { "board_id", (Function *)NULL, (char *)NULL },
     { "cald_test", (Function *)NULL, (char *)NULL },
     { "cgt_test", (Function *)NULL, (char *)NULL },
+    { "orphan_test", (Function *)NULL, (char *)NULL },
     { "chinj_scan", (Function *)NULL, (char *)NULL },
     { "crate_cbal", (Function *)NULL, (char *)NULL },
     { "disc_check", (Function *)NULL, (char *)NULL },

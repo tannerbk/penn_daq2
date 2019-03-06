@@ -15,6 +15,8 @@
 #define GTPED_DELAY 20
 #define TDELAY_EXTRA 0
 #define NGTVALID 20
+// GTValid should be shorter than lockout
+#define LOCKOUT_WIDTH 420
 
 
 

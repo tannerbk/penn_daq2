@@ -28,6 +28,7 @@
 #include "LocalVMon.h"
 #include "ZDisc.h"
 #include "RunPedestals.h"
+#include "OrphanTest.h"
 #include "FinalTest.h"
 #include "ECAL.h"
 #include "CreateFECDocs.h"
@@ -1005,6 +1006,27 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     CGTTest(crateNum,slotMask,channelMask,update);
+    UnlockConnections(1,0x1<<crateNum);
+
+  }else if (strncmp(input,"orphan_test",11) == 0){
+    if (GetFlag(input,'h')){
+      lprintf("Usage: orphan_test -c [crate_num (int)] "
+          "-s [slot mask (hex)] -p [channel mask (hex)] -d (update database) \n");
+      goto err;
+    }
+    int crateNum = GetInt(input,'c',2);
+    uint32_t slotMask = GetUInt(input,"s",0xFFFF);
+    uint32_t channelMask = GetUInt(input,"p",0xFFFFFFFF);
+    int update = GetFlag(input,'d');
+    int busy = LockConnections(1,0x1<<crateNum);
+    if (busy){
+      if (busy > 9)
+        lprintf("Trying to access a board that has not been connected\n");
+      else
+        lprintf("ThoseConnections are currently in use.\n");
+      goto err;
+    }
+    OrphanTest(crateNum,slotMask,channelMask,update);
     UnlockConnections(1,0x1<<crateNum);
 
   }else if (strncmp(input,"chinj_scan",10) == 0){
