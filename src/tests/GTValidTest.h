@@ -5,7 +5,7 @@
 
 #define VMAX 203
 #define TACREF 72
-#define ISETM_MIN 110
+#define ISETM_MIN 155
 #define ISETM_MAX_GTVALID 80 
 #define ISETA 70
 #define ISETA_NO_TWIDDLE 0
@@ -23,7 +23,7 @@
 void IsGTValidLonger(uint32_t crateMask, uint32_t *slotMasks, float time, uint16_t *islonger);
 float MeasureGTValid(int crateNum, int slotNum, int tac, float max_gtvalid, uint32_t max_isetm);
 int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, float gtCutoff, int twiddleOn, int setOnly, int updateDB, int updateDetectorDB, int finalTest=0, int ecal=0);
-void MeasureGTValidOnly(int crateNum, int slotNum, int isetm1, int isetm2, float max_gtvalid, int max_isetm); 
+int MeasureGTValidOnly(int crateNum, int slotNum, int isetm1, int isetm2, float max_gtvalid, int max_isetm);
 
 #endif
 
