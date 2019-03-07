@@ -569,6 +569,24 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
   return 0;
 }
 
+void MeasureGTValidOnly(int crateNum, int slotNum, int isetm1, int isetm2, float max_gtvalid, int max_isetm){
+
+  uint32_t result;
+  int error;
+  float gtvalid_final[2][32] = {{0}};
+  for (int wt=0;wt<2;wt++){
+    lprintf("\nMeasuring GTVALID for crate %d, slot %d, TAC %d\n",crateNum,slotNum,wt);
+    // loop over channel to measure inital GTVALID and find channel with max
+    for (int j=0;j<32;j++){
+        error += xl3s[crateNum]->LoadsDac(d_isetm[0],isetm1,slotNum);
+        error += xl3s[crateNum]->LoadsDac(d_isetm[1],isetm2,slotNum);
+        xl3s[crateNum]->RW(PED_ENABLE_R + FEC_SEL*slotNum + WRITE_REG,1<<j,&result);
+        gtvalid_final[wt][j] = MeasureGTValid(crateNum,slotNum,wt,max_gtvalid,max_isetm);
+        lprintf("Channel %d TAC %d GTValid %f\n", j, wt, gtvalid_final[wt][j]);
+    } // end loop over channels
+  } // end loop over tacs
+} 
+
 // returns 1 if gtvalid is longer than time, 0 otherwise.
 // if gtvalid is longer should get hits generated from all the pedestals
 void IsGTValidLonger(uint32_t crateMask, uint32_t *slotMasks, float time, uint16_t* islonger)

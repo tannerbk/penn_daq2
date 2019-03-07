@@ -358,7 +358,6 @@ int CrateInit(int crateNum,uint32_t slotMask, int xilinxLoad,
         }
       }
 
-
       ///////////////////////////////
       // SEND THE DATABASE TO XL3s //
       ///////////////////////////////
@@ -367,7 +366,6 @@ int CrateInit(int crateNum,uint32_t slotMask, int xilinxLoad,
 
       SwapLongBlock(packet.payload,1);	
       SwapFECDB(mb_consts);
-        //mb_consts->vThr[17] = 255; 
 
       if (enableTriggers){
         lprintf("ENABLING TRIGGERS!\n");
@@ -383,9 +381,7 @@ int CrateInit(int crateNum,uint32_t slotMask, int xilinxLoad,
       }
       xl3s[crateNum]->SendCommand(&packet,0);
 
-      //  json_delete(hw_docs[i]);
     }
-
 
     // GET CTC DELAY FROM CTC_DOC IN DB
     pouch_request *ctc_response = pr_init();

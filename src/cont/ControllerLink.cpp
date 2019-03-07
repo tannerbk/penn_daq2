@@ -1173,6 +1173,30 @@ void *ControllerLink::ProcessCommand(void *arg)
     GTValidTest((0x1)<<crateNum,slotMasks,channelMask,gtCutoff,twiddleOn,setOnly,update,detectorupdate);
     UnlockConnections(1,0x1<<crateNum);
 
+  }else if (strncmp(input,"measure_gtvalids",16) == 0){
+    if (GetFlag(input,'h')){
+      lprintf("Usage: gtvalid_test -c [crate num (int)] "
+          "-s [slot (int)] -e [isetm1 (int)] -f [isetm2 (int)] "
+          "-m [max_gtvalid (float)] -i [max_isetm (int)] \n");
+      goto err;
+    }
+    int crateNum = GetInt(input,'c',2);
+    int slotNum = GetInt(input, 's',2);
+    int isetm1 = GetInt(input, 'e', 170);
+    int isetm2 = GetInt(input, 'f', 170);
+    float max_gtvalid = GetFloat(input, 'm', 420.0); 
+    int max_isetm = GetInt(input, 'i', 80);
+    int busy = LockConnections(1,0x1<<crateNum);
+    if (busy){
+      if (busy > 9)
+        lprintf("Trying to access a board that has not been connected\n");
+      else
+        lprintf("ThoseConnections are currently in use.\n");
+      goto err;
+    }
+    MeasureGTValidOnly(crateNum, slotNum, isetm1, isetm2, max_gtvalid, max_isetm);
+    UnlockConnections(1,0x1<<crateNum);
+
   }else if (strncmp(input,"mb_stability_test",17) == 0){
     if (GetFlag(input,'h')){
       lprintf("Usage: mb_stability_test -c [crate num (int)] "
