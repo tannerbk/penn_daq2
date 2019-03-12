@@ -177,7 +177,8 @@ void *ControllerLink::ProcessCommand(void *arg)
           "-v (reset HV dac) -B (load vbal from db) -T (load vthr from find_noise db) "
           "-D (load tdisc from db) -C (load tcmos values from db) -A (load all from db) "
           "-N (load vthr from zdisc db) "
-          "-e (use crate/card specific values from ECAL db) -t (enable nhit 100 and nhit 20 triggers)\n");
+          "-e (use crate/card specific values from ECAL db) -t (enable nhit 100 and nhit 20 triggers) "
+          "-w [int] (set n100 width) -d [int] (set n20 delay) -v [int] (set n20 width)\n");
       goto err;
     }
     int crateNum = GetInt(input,'c',2);
@@ -192,6 +193,9 @@ void *ControllerLink::ProcessCommand(void *arg)
     int useNoise = GetFlag(input,'N');
     int useHw = GetFlag(input,'e');
     int enableTriggers = GetFlag(input,'t');
+    int n100width = GetInt(input, 'w', 0);
+    int n20delay = GetInt(input, 'd', 0);
+    int n20width = GetInt(input, 'v', 0);
     int xilinxLoad = 0;
     if (xilinxLoadNormal)
       xilinxLoad = 1;
@@ -206,7 +210,8 @@ void *ControllerLink::ProcessCommand(void *arg)
       goto err;
     }
     CrateInit(crateNum,slotMask,xilinxLoad,
-        useVBal,useVThr,useTDisc,useTCmos,useAll,useNoise,useHw,enableTriggers);
+        useVBal,useVThr,useTDisc,useTCmos,useAll,useNoise,useHw,enableTriggers,
+        n100width,n20delay,n20width);
     UnlockConnections(0,0x1<<crateNum);
 
   }else if (strncmp(input,"xr",2) == 0){
