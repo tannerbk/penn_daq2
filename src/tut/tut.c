@@ -106,6 +106,7 @@ COMMAND commands[] = {
     { "fec_test", (Function *)NULL, (char *)NULL },
     { "fifo_test", (Function *)NULL, (char *)NULL },
     { "gtvalid_test", (Function *)NULL, (char *)NULL },
+    { "measure_gtvalids", (Function *)NULL, (char *)NULL },
     { "mb_stability_test", (Function *)NULL, (char *)NULL },
     { "mem_test", (Function *)NULL, (char *)NULL },
     { "ped_run", (Function *)NULL, (char *)NULL },

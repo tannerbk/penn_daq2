@@ -62,8 +62,10 @@ int XL3QueueRW(int crateNum, uint32_t address, uint32_t data)
 }
 
 int CrateInit(int crateNum,uint32_t slotMask, int xilinxLoad,
-    int useVBal, int useVThr, int useTDisc, int useTCmos, int useAll, int useNoise, int useHw, int enableTriggers)
-{
+              int useVBal, int useVThr, int useTDisc, int useTCmos, 
+              int useAll, int useNoise, int useHw, int enableTriggers,
+              int tr100Delay, int tr20Delay, int tr20Width){
+
   lprintf("*** Starting Crate Init ****************\n");
   char get_db_address[500];
   char ctc_address[500];
@@ -179,7 +181,6 @@ int CrateInit(int crateNum,uint32_t slotMask, int xilinxLoad,
         JsonNode *value = json_find_member(next_row,"value");
         ParseFECHw(value,mb_consts);
       }
-
 
       //////////////////////////////
       // GET VALUES FROM DEBUG DB //
@@ -379,6 +380,29 @@ int CrateInit(int crateNum,uint32_t slotMask, int xilinxLoad,
           mb_consts->tr20.mask[k] = 0;
         }
       }
+
+      if(tr100Delay){
+        // This is a misnomer, its actually the width
+        lprintf("Changing N100 Width to: %d!\n", tr100Delay);
+        for (int k=0;k<32;k++){
+          mb_consts->tr100.tDelay[k] = tr100Delay;
+        }
+      }
+
+      if(tr20Delay){
+        lprintf("Changing N20 Delay to: %d!\n", tr20Delay);
+        for (int k=0;k<32;k++){
+          mb_consts->tr20.tDelay[k] = tr20Delay;
+        }
+      }
+
+      if(tr20Width){
+        lprintf("Changing N20 Width to: %d!\n", tr20Width);
+        for (int k=0;k<32;k++){
+          mb_consts->tr20.tWidth[k] = tr20Width;
+        }
+      }
+
       xl3s[crateNum]->SendCommand(&packet,0);
 
     }

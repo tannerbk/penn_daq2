@@ -3,7 +3,8 @@
 int XL3RW(int crateNum, uint32_t address, uint32_t data);
 int XL3QueueRW(int crateNum, uint32_t address, uint32_t data);
 int CrateInit(int crateNum,uint32_t slotMask, int xilinxLoad,
-    int useVBal, int useVThr, int useTDisc, int useTCmos, int useAll, int useNoise, int useHw, int enableTriggers=0);
+    int useVBal, int useVThr, int useTDisc, int useTCmos, int useAll, int useNoise, int useHw, int enableTriggers=0,
+    int tr100Delay=0, int tr20Delay=0, int tr20Width=0);
 int SMReset(int crateNum);
 int DebuggingMode(int crateNum, int on);
 int ChangeMode(int crateNum, int mode, uint32_t dataAvailMask);
