@@ -30,7 +30,6 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
   float gmax[2],gmin[2];
   int cmax[2],cmin[2];
 
-
   uint32_t dac_nums[50],dac_values[50],slot_nums[50];
   int num_dacs;
 
@@ -90,10 +89,6 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
       }
     }
 
-    // We first need to find the max gtvalid per channel, and find the
-    // ISETM settings per channel for max gtvalid 
-    lprintf("Finding max possible gtvalids\n");
-
     // turn off twiddle bits
     for (int crateNum=0;crateNum<20;crateNum++){
       if ((0x1<<crateNum) & crateMask){
@@ -123,17 +118,10 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
         for (int i=0;i<16;i++){
           if ((0x1<<i) & slotMasks[crateNum]){
             error = xl3s[crateNum]->LoadTacbits(i,tacbits[crateNum][i]);
-            // FIXME
             if (error)
               lprintf("Crate %d slot %d: Error setting up TAC voltages. Exiting\n",crateNum,i);
           }
         }
-        /*
-           if (error){
-           lprintf("Error setting up TAC voltages. Exiting\n");
-           return -1;
-           }
-           */
       }
     }
 
@@ -257,16 +245,15 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
       } // end channel mask
     } // end loop over channels
 
-
     // ok we now know what the max gtvalid is for each channel and what
     // isetm value will get us it
     // now we increment isetm until every channels gtvalid is shorter than
     // gtcutoff
     for (int wt=0;wt<2;wt++){
-      lprintf("Finding ISETM values for crates %05x, TAC %d\n",crateMask,wt);
       int ot = (wt+1)%2;
       for (int crateNum=0;crateNum<20;crateNum++){
         if ((0x1<<crateNum) & crateMask){
+          lprintf("Finding ISETM values for crate %d, TAC %d\n",crateNum,wt);
           for (int i=0;i<16;i++){
             isetm[wt][crateNum][i] = ISETM_MIN;
           }
@@ -410,7 +397,6 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
       }
       printf("\n");
     } // end loop over tacs
-
 
     // we are done getting our dac values. lets measure and display the final gtvalids
     for (int crateNum=0;crateNum<20;crateNum++){
@@ -569,29 +555,117 @@ int GTValidTest(uint32_t crateMask, uint32_t *slotMasks, uint32_t channelMask, f
   return 0;
 }
 
-void MeasureGTValidOnly(int crateNum, int slotNum, int isetm1, int isetm2, float max_gtvalid, int max_isetm){
+int MeasureGTValidOnly(int crateNum, int slotMask, int isetm1, int isetm2, float max_gtvalid, int max_isetm){
 
   uint32_t result;
   int error;
+  uint32_t dac_nums[50],dac_values[50],slot_nums[50];
+  int num_dacs;
+  uint16_t tacbits[20][16][32];
+
+  // setup crate
+  for (int i=0;i<16;i++){
+    if ((0x1<<i) & slotMask){
+      uint32_t select_reg = FEC_SEL*i;
+      // disable pedestals
+      xl3s[crateNum]->RW(PED_ENABLE_R + select_reg + WRITE_REG,0x0,&result);
+      // reset fifo
+      xl3s[crateNum]->RW(CMOS_CHIP_DISABLE_R + select_reg + WRITE_REG,0xFFFFFFFF,&result);
+      xl3s[crateNum]->RW(GENERAL_CSR_R + select_reg + READ_REG,0x0,&result);
+      xl3s[crateNum]->RW(GENERAL_CSR_R + select_reg + WRITE_REG,
+          result | (crateNum << FEC_CSR_CRATE_OFFSET) | 0x6,&result);
+      xl3s[crateNum]->RW(GENERAL_CSR_R + select_reg + WRITE_REG,
+          (crateNum << FEC_CSR_CRATE_OFFSET),&result);
+      xl3s[crateNum]->RW(CMOS_CHIP_DISABLE_R + select_reg + WRITE_REG,0x0,&result);
+    }
+  }
+  xl3s[crateNum]->DeselectFECs();
+
+  if (mtc->SetupPedestals(0,DEFAULT_PED_WIDTH,10,0,(1<<crateNum),(1<<crateNum))){
+    lprintf("Error setting up mtc. Exiting\n");
+    return -1;
+  }
+
+  // Load VMAX and TACREF DACs
+  for (int i=0;i<16;i++){
+    num_dacs = 0;
+    if ((0x1<<i) & slotMask){
+      dac_nums[num_dacs] = d_vmax;
+      dac_values[num_dacs] = VMAX;
+      slot_nums[num_dacs] = i;
+      num_dacs++;
+      dac_nums[num_dacs] = d_tacref;
+      dac_values[num_dacs] = TACREF;
+      slot_nums[num_dacs] = i;
+    }
+  }
+  xl3s[crateNum]->MultiLoadsDac(num_dacs,dac_nums,dac_values,slot_nums);
+
+  // Set ISETA Twiddle bits to 0
+  for (int i=0;i<16;i++){
+    num_dacs = 0;
+    if ((0x1<<i) & slotMask){
+      dac_nums[num_dacs] = d_iseta[0];
+      dac_values[num_dacs] = ISETA_NO_TWIDDLE;
+      slot_nums[num_dacs] = i;
+      num_dacs++;
+      dac_nums[num_dacs] = d_iseta[1];
+      dac_values[num_dacs] = ISETA_NO_TWIDDLE;
+      slot_nums[num_dacs] = i;
+    }
+  }
+  xl3s[crateNum]->MultiLoadsDac(num_dacs,dac_nums,dac_values,slot_nums);
+
+  // Set TAC bits to 0
+  for (int i=0;i<16;i++){
+    if ((0x1<<i) & slotMask){
+      for (int j=0;j<32;j++){
+        tacbits[crateNum][i][j] = 0x00;
+      }
+      error = xl3s[crateNum]->LoadTacbits(i,tacbits[crateNum][i]);
+      if (error)
+        lprintf("Crate %d slot %d: Error setting up TAC voltages. Exiting\n",crateNum,i);
+    }  
+  }
+
   float gtvalid_final[2][32] = {{0}};
-  for (int wt=0;wt<2;wt++){
-    lprintf("\nMeasuring GTVALID for crate %d, slot %d, TAC %d\n",crateNum,slotNum,wt);
-    // loop over channel to measure inital GTVALID and find channel with max
-    for (int j=0;j<32;j++){
-        error += xl3s[crateNum]->LoadsDac(d_isetm[0],isetm1,slotNum);
-        error += xl3s[crateNum]->LoadsDac(d_isetm[1],isetm2,slotNum);
-        xl3s[crateNum]->RW(PED_ENABLE_R + FEC_SEL*slotNum + WRITE_REG,1<<j,&result);
-        gtvalid_final[wt][j] = MeasureGTValid(crateNum,slotNum,wt,max_gtvalid,max_isetm);
-        lprintf("Channel %d TAC %d GTValid %f\n", j, wt, gtvalid_final[wt][j]);
-    } // end loop over channels
-  } // end loop over tacs
+  for (int i=0;i<16;i++){
+    if ((0x1<<i) & slotMask){
+      for (int wt=0;wt<2;wt++){
+        if(wt==0)
+          lprintf("\nMeasuring GTVALID for crate %d, slot %d, TAC %d ISETM0 %d\n",crateNum,i,wt,isetm1);
+        if(wt==1)
+          lprintf("\nMeasuring GTVALID for crate %d, slot %d, TAC %d ISETM1 %d\n",crateNum,i,wt,isetm2);
+        // loop over channel to measure inital GTVALID and find channel with max
+        for (int j=0;j<32;j++){
+            error += xl3s[crateNum]->LoadsDac(d_isetm[0],isetm1,i);
+            error += xl3s[crateNum]->LoadsDac(d_isetm[1],isetm2,i);
+            xl3s[crateNum]->RW(PED_ENABLE_R + FEC_SEL*i + WRITE_REG,1<<j,&result);
+            gtvalid_final[wt][j] = MeasureGTValid(crateNum,i,wt,max_gtvalid,max_isetm);
+            lprintf("Channel %d TAC %d GTValid %f\n", j, wt, gtvalid_final[wt][j]);
+            if(gtvalid_final[wt][j] == -2){
+              lprintf("Warning: Bad GTValid length, longer than %f!\n", max_gtvalid);
+            }
+            else if(gtvalid_final[wt][j] >= LOCKOUT_WIDTH){
+              lprintf("Warning: GTValid length %f longer than Lockout = %d\n", gtvalid_final[wt][j], LOCKOUT_WIDTH);
+            }
+            else if(gtvalid_final[wt][j] <= LOCKOUT_WIDTH-100){
+              lprintf("Warning: GTValid length %f shorter than %d\n", gtvalid_final[wt][j], LOCKOUT_WIDTH-100);
+            }
+        } // end loop over channels
+      } // end loop over tacs
+    } // slot mask
+  } // loop over slots
+  return 0;
 } 
 
 // returns 1 if gtvalid is longer than time, 0 otherwise.
 // if gtvalid is longer should get hits generated from all the pedestals
 void IsGTValidLonger(uint32_t crateMask, uint32_t *slotMasks, float time, uint16_t* islonger)
 {
-  usleep(5000);
+  // TBK FIXME commented out this and the below sleep because they don't seem to do anything
+  // Also this measurement is not critical for anything, so we want to speed it up.
+  //usleep(5000);
   uint32_t result;
   for (int i=0;i<20;i++)
     islonger[i] = 0x0;
@@ -610,7 +684,7 @@ void IsGTValidLonger(uint32_t crateMask, uint32_t *slotMasks, float time, uint16
   mtc->SetGTDelay(time+GTPED_DELAY+TDELAY_EXTRA); 
 
   mtc->MultiSoftGT(NGTVALID);
-  usleep(5000);
+  //usleep(5000);
 
   for (int crateNum=0;crateNum<20;crateNum++){
     if ((0x1<<crateNum) & crateMask){
@@ -640,14 +714,10 @@ void IsGTValidLonger(uint32_t crateMask, uint32_t *slotMasks, float time, uint16
 // Measure skipped with setOnly flag
 float MeasureGTValid(int crateNum, int slotNum, int tac, float max_gtvalid, uint32_t max_isetm)
 {
-  lprintf(".");
-  fflush(stdout);
-
   uint32_t result;
   float upper_limit = max_gtvalid;
   float lower_limit = GTMIN;
   float current_delay;
-  uint32_t select_reg = FEC_SEL*slotNum;
 
   // set unmeasured TAC gtvalid to maximum so the tac we are looking at will fail first
   int othertac = (tac+1)%2;
